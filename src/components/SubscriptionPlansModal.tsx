@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuthSubscription } from '../context/AuthSubscriptionContext';
 import { SubscriptionPlanType } from '../types';
+import { PayPalConnectedPlans } from './PayPalConnectedPlans';
 import { PayPalSmartCheckout } from './PayPalSmartCheckout';
 import { PayPalHostedButtonsCheckout } from './PayPalHostedButtonsCheckout';
 
@@ -39,8 +40,8 @@ export const SubscriptionPlansModal: React.FC = () => {
     simulateResetTrial
   } = useAuthSubscription();
 
-  const [activeTab, setActiveTab] = useState<'plans' | 'hosted_buttons' | 'billing' | 'transition_settings' | 'paypal'>(
-    (subscriptionModalTab as any) || 'hosted_buttons'
+  const [activeTab, setActiveTab] = useState<'connected_plans' | 'plans' | 'hosted_buttons' | 'billing' | 'transition_settings' | 'paypal'>(
+    (subscriptionModalTab as any) || 'connected_plans'
   );
   const [selectedTransition, setSelectedTransition] = useState<SubscriptionPlanType>(
     currentUser?.subscription.selectedPlan || 'monthly'
@@ -135,11 +136,23 @@ export const SubscriptionPlansModal: React.FC = () => {
 
         {/* Tab Row */}
         <div className="px-6 py-2.5 bg-slate-100 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <button
+              id="tab-paypal-connected-btn"
+              onClick={() => setActiveTab('connected_plans')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'connected_plans'
+                  ? 'bg-[#00d084] text-[#0d131f] shadow-xs'
+                  : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/60 dark:hover:bg-slate-800'
+              }`}
+            >
+              <span className="italic font-black text-xs">PayPal</span>
+              <span>Connected Plans (CAD)</span>
+            </button>
             <button
               id="tab-paypal-hosted-btn"
               onClick={() => setActiveTab('hosted_buttons')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'hosted_buttons'
                   ? 'bg-[#0070ba] text-white shadow-xs'
                   : 'text-[#0070ba] dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-slate-800'
@@ -150,7 +163,7 @@ export const SubscriptionPlansModal: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('plans')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'plans'
                   ? 'bg-[#800000] text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -160,7 +173,7 @@ export const SubscriptionPlansModal: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('transition_settings')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'transition_settings'
                   ? 'bg-[#800000] text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -170,7 +183,7 @@ export const SubscriptionPlansModal: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('billing')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
                 activeTab === 'billing'
                   ? 'bg-[#800000] text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -181,7 +194,7 @@ export const SubscriptionPlansModal: React.FC = () => {
             <button
               id="tab-paypal-checkout-btn"
               onClick={() => setActiveTab('paypal')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'paypal'
                   ? 'bg-[#003087] text-[#FFC439] shadow-xs'
                   : 'text-[#003087] dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-slate-800'
@@ -208,6 +221,15 @@ export const SubscriptionPlansModal: React.FC = () => {
 
         {/* Modal Content */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh]">
+
+          {/* TAB 0: CONNECTED SUBSCRIPTION PLANS (7-DAY TRIAL, $15.99/MO, $155.99/YR) */}
+          {activeTab === 'connected_plans' && (
+            <PayPalConnectedPlans
+              onSuccess={(subId, planType) => {
+                console.log('Connected plan activated:', subId, planType);
+              }}
+            />
+          )}
 
           {/* TAB 1: 3 UNCONNECTED TIERS (7-DAY TRIAL, $15.99/MO, $155.99/YR) */}
           {activeTab === 'plans' && (

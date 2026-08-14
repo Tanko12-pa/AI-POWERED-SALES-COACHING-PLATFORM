@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { motion, AnimatePresence } from 'motion/react';
 import { TranscriptReviewModal } from './TranscriptReviewModal';
 import { CoachingEfficiencyGuide } from './CoachingEfficiencyGuide';
@@ -609,14 +609,13 @@ export const SalesCoachingFeed: React.FC<SalesCoachingFeedProps> = ({
     setSnapshotSuccess(false);
 
     try {
-      const canvas = await html2canvas(forecastWidgetRef.current, {
-        scale: 2,
-        useCORS: true,
+      const imageUri = await toPng(forecastWidgetRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
         backgroundColor: isDarkMode ? '#0F172A' : '#FFFFFF',
-        logging: false
+        cacheBust: true
       });
 
-      const imageUri = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `Revenue_Forecast_Snapshot_${forecastTimeframe}_${forecastScenario}_${forecastViewMode}.png`;
       link.href = imageUri;
