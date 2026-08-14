@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account details, preferences, and active subscription state",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["Admin", "Sales Rep", "Sales Manager", "VP Sales"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trialing", "past_due", "cancelled"] },
+        "plan": { "type": "string", "enum": ["free_trial", "monthly", "yearly"] },
+        "currency": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "CoachingSession": {
+      "title": "Coaching Session",
+      "description": "AI sales roleplay and coaching simulation metrics",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "repName": { "type": "string" },
+        "dealName": { "type": "string" },
+        "scenario": { "type": "string" },
+        "score": { "type": "number" },
+        "objectionsHandled": { "type": "number" },
+        "talkRatio": { "type": "number" },
+        "wpm": { "type": "number" },
+        "recommendations": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sessionId", "userId", "repName"]
+    },
+    "CrmOpportunity": {
+      "title": "CRM Opportunity",
+      "description": "Sales pipeline deals and opportunity status",
+      "type": "object",
+      "properties": {
+        "opportunityId": { "type": "string" },
+        "userId": { "type": "string" },
+        "company": { "type": "string" },
+        "dealSize": { "type": "number" },
+        "stage": { "type": "string" },
+        "health": { "type": "string" },
+        "closeDate": { "type": "string" },
+        "contactName": { "type": "string" },
+        "nextStep": { "type": "string" }
+      },
+      "required": ["opportunityId", "userId", "company", "dealSize"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual user profile and settings document"
+    },
+    "users/{userId}/coachingSessions/{sessionId}": {
+      "schema": "CoachingSession",
+      "description": "User specific AI coaching sessions and simulation history"
+    },
+    "users/{userId}/opportunities/{opportunityId}": {
+      "schema": "CrmOpportunity",
+      "description": "User CRM pipeline deals and opportunities"
+    }
+  }
+}

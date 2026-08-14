@@ -1,0 +1,6 @@
+{
+  "name": "AI-Powered Sales Coaching Platform",
+  "description": "Revenue intelligence, coaching, and marketing optimization in one AI workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
