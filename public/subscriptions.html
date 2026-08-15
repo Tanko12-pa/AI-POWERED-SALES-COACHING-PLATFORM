@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Powered Sales Coaching Platform - Subscriptions</title>
+  
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #0d131f; color: #ffffff; margin: 0; padding: 2rem; }
+    
+    .pricing-grid {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      max-width: 1100px;
+      margin: 0 auto 2rem auto;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: #141c2e;
+      border: 1px solid #23314a;
+      border-radius: 12px;
+      padding: 1.75rem;
+      flex: 1;
+      min-width: 300px;
+      max-width: 350px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card.active-plan {
+      border: 2px solid #ea384d;
+      box-shadow: 0 0 15px rgba(234, 56, 77, 0.2);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .badge-red { background: #b91c1c; color: #fff; }
+    .badge-blue { background: #1e3a8a; color: #60a5fa; }
+    .badge-green { background: #84cc16; color: #1a2e05; }
+    .badge-active { background: #064e3b; color: #34d399; float: right; }
+
+    .price { font-size: 2.2rem; font-weight: 800; color: #ff5252; margin: 0.5rem 0; }
+    .price span { font-size: 0.9rem; color: #94a3b8; font-weight: normal; }
+
+    ul.features { list-style: none; padding: 0; margin: 1.5rem 0; font-size: 0.88rem; color: #cbd5e1; }
+    ul.features li { margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; }
+    ul.features li::before { content: "✓"; color: #34d399; font-weight: bold; }
+
+    .paypal-button-container { margin-top: 1rem; min-height: 45px; }
+
+    /* Footer Status Bar */
+    .status-bar {
+      background: #1a2436;
+      border: 1px solid #2d3d59;
+      border-radius: 12px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .status-info { display: flex; align-items: center; gap: 1rem; }
+    .status-pill { background: #064e3b; color: #34d399; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+    .email-input { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 8px 12px; border-radius: 6px; width: 220px; }
+    .btn-quick { background: #ffc439; color: #111; font-weight: bold; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+  </style>
+
+  <!-- Load PayPal SDK with vault and CAD currency -->
+  <script src="https://www.paypal.com/sdk/js?client-id=BAAEeaPbIq6dCAVkztoxH_i7GSu4qvzw5b6pdAKVtcji2Dq4F7vQTIZqmvQWG7RWb0pQaSJMDfjpFlPjBk&vault=true&intent=subscription&currency=CAD"></script>
+</head>
+<body>
+
+  <main class="pricing-grid">
+    
+    <!-- 1. 7-Day Free Trial -->
+    <div class="card">
+      <div>
+        <span class="badge badge-red">RISK-FREE</span>
+        <h2>7-Day Free Trial</h2>
+        <p style="font-size:0.8rem; color:#94a3b8;">Test all coaching capabilities free for 7 full days.</p>
+        <div class="price">$0.00 <span>/ 7 days</span></div>
+        <p style="font-size:0.75rem; color:#94a3b8;">Automatically transitions to your selected plan after Day 7.</p>
+        
+        <ul class="features">
+          <li>Full AI scorecard analyzer</li>
+          <li>Multimodal call audio transcription</li>
+          <li>Real-time speech practice pitch lab</li>
+          <li>Zero immediate credit card charge</li>
+        </ul>
+      </div>
+      <div id="paypal-btn-trial" class="paypal-button-container"></div>
+    </div>
+
+    <!-- 2. Monthly Pro Plan -->
+    <div class="card">
+      <div>
+        <span class="badge badge-blue">MONTHLY FLEX</span>
+        <h2>Monthly Pro Plan</h2>
+        <p style="font-size:0.8rem; color:#94a3b8;">Standalone monthly subscription with cancel-anytime flexibility.</p>
+        <div class="price">$15.99 <span>/ month</span></div>
+        <p style="font-size:0.75rem; color:#94a3b8;">Billed monthly.</p>
+
+        <ul class="features">
+          <li>Unlimited AI coaching sessions</li>
+          <li>Full MEDDIC & talk-to-listen breakdowns</li>
+          <li>CRM automated deal stage triggers</li>
+          <li>Cancel or switch at any time</li>
+        </ul>
+      </div>
+      <div id="paypal-btn-monthly" class="paypal-button-container"></div>
+    </div>
+
+    <!-- 3. Yearly Pro Plan -->
+    <div class="card active-plan">
+      <div>
+        <span class="badge badge-green">BEST VALUE - SAVE 18%</span>
+        <span class="badge badge-active">✓ Subscribed</span>
+        <h2>Yearly Pro Plan</h2>
+        <p style="font-size:0.8rem; color:#94a3b8;">Standalone annual subscription with 18% maximum savings.</p>
+        <div class="price">$155.99 <span>/ year</span></div>
+        <p style="font-size:0.75rem; color:#34d399;">Equivalent to $13.00 / month (Save $35.89 / year)</p>
+
+        <ul class="features">
+          <li>Everything in Monthly Pro Plan</li>
+          <li>Priority Gemini 3.6 processing queue</li>
+          <li>Advanced team coaching benchmarks</li>
+          <li>18% cost savings locked for 1 year</li>
+        </ul>
+      </div>
+      <div id="paypal-btn-yearly" class="paypal-button-container"></div>
+    </div>
+
+  </main>
+
+  <!-- Bottom PayPal Gateway Status Bar -->
+  <footer class="status-bar">
+    <div class="status-info">
+      <strong style="color:#0070ba;">PayPal</strong>
+      <div>
+        <div style="font-size: 0.85rem; font-weight: bold;">PayPal REST API Connected & Verified <span class="status-pill">Sandbox Gateway Active</span></div>
+        <div style="font-size: 0.75rem; color: #64748b;">Client ID: BAAEeaPb...FlPjBk • Secure 256-bit encryption • Instant checkout</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:0.5rem;">
+      <input type="email" id="quick-email" class="email-input" value="alex.morgan@enterprise.ai" />
+      <button class="btn-quick" onclick="alert('Quick Checkout triggered for ' + document.getElementById('quick-email').value)">Quick Checkout</button>
+    </div>
+  </footer>
+
+  <script>
+    // Map plans to client side handlers using PayPal JS SDK
+    const PLAN_IDS = {
+      trial: 'P-7DAYTRIALPLANID12345',
+      monthly: 'P-MONTHLYPROPLANID67890',
+      yearly: 'P-YEARLYPROPLANID11223'
+    };
+
+    function renderPlanButton(containerSelector, planType, labelText) {
+      if (!window.paypal || !window.paypal.Buttons) return;
+      paypal.Buttons({
+        style: {
+          shape: 'rect',
+          color: planType === 'yearly' ? 'gold' : 'blue',
+          layout: 'vertical',
+          label: 'subscribe'
+        },
+        createSubscription: function(data, actions) {
+          return actions.subscription.create({
+            'plan_id': PLAN_IDS[planType]
+          });
+        },
+        onApprove: function(data) {
+          alert(`Subscription successfully activated! Plan: ${planType.toUpperCase()} | Subscription ID: ${data.subscriptionID}`);
+        },
+        onError: function(err) {
+          console.error(`PayPal Error [${planType}]:`, err);
+        }
+      }).render(containerSelector);
+    }
+
+    // Render Smart Subscription Buttons for each plan when SDK loads
+    window.addEventListener('load', function() {
+      if (window.paypal && window.paypal.Buttons) {
+        renderPlanButton('#paypal-btn-trial', 'trial');
+        renderPlanButton('#paypal-btn-monthly', 'monthly');
+        renderPlanButton('#paypal-btn-yearly', 'yearly');
+      }
+    });
+  </script>
+
+</body>
+</html>

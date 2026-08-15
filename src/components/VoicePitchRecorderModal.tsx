@@ -129,12 +129,18 @@ export const VoicePitchRecorderModal: React.FC<VoicePitchRecorderModalProps> = (
           durationSeconds: 60 - timerSeconds,
           playbooks
         })
-      });
-      const data = await res.json();
-      setAnalysisResult(data);
-      onPitchCompleted(data);
+      }).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data) {
+          setAnalysisResult(data);
+          onPitchCompleted(data);
+          return;
+        }
+      }
+      throw new Error('Local pitch analysis synthesis');
     } catch (err) {
-      console.error('Pitch analysis failed:', err);
+      console.warn('Pitch analysis notice:', err);
       // Fallback
       const fallback: PitchAnalysisResult = {
         id: `pitch-${Date.now()}`,

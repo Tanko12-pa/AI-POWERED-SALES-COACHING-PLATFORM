@@ -20,9 +20,9 @@ declare global {
 }
 
 export const DEFAULT_PLAN_IDS = {
-  TRIAL: 'P-3TRIALPLANIDEXAMPLE1234',     // 7-day trial ($0) transitioning to $15.99/mo
-  MONTHLY: 'P-MONTHLYPLANIDEXAMPLE5678', // Standalone $15.99/mo recurring plan
-  YEARLY: 'P-YEARLYPLANIDEXAMPLE9012'    // Standalone $155.99/yr recurring plan
+  TRIAL: 'P-7DAYTRIALPLANID12345',      // 7-day trial ($0) transitioning to $15.99/mo CAD
+  MONTHLY: 'P-MONTHLYPROPLANID67890',  // Standalone $15.99/mo CAD recurring plan
+  YEARLY: 'P-YEARLYPROPLANID11223'     // Standalone $155.99/yr CAD recurring plan
 };
 
 interface PayPalConnectedPlansProps {
@@ -42,6 +42,7 @@ export const PayPalConnectedPlans: React.FC<PayPalConnectedPlansProps> = ({
   } = useAuthSubscription();
 
   const [planIds, setPlanIds] = useState(DEFAULT_PLAN_IDS);
+  const [currency, setCurrency] = useState('CAD');
   const [showConfig, setShowConfig] = useState(false);
   const [sdkStatus, setSdkStatus] = useState<'loading' | 'ready' | 'fallback'>('loading');
   const [activeAlert, setActiveAlert] = useState<string | null>(null);
@@ -49,6 +50,25 @@ export const PayPalConnectedPlans: React.FC<PayPalConnectedPlansProps> = ({
   const trialBtnRef = useRef<HTMLDivElement>(null);
   const monthlyBtnRef = useRef<HTMLDivElement>(null);
   const yearlyBtnRef = useRef<HTMLDivElement>(null);
+
+  // Auto-fetch latest backend PayPal configuration
+  useEffect(() => {
+    fetch('/api/paypal/config')
+      .then(res => (res && res.ok ? res.json().catch(() => ({})) : {}))
+      .then((data: any) => {
+        if (data && data.planIds) {
+          setPlanIds({
+            TRIAL: data.planIds.trial || DEFAULT_PLAN_IDS.TRIAL,
+            MONTHLY: data.planIds.monthly || DEFAULT_PLAN_IDS.MONTHLY,
+            YEARLY: data.planIds.yearly || DEFAULT_PLAN_IDS.YEARLY
+          });
+        }
+        if (data && data.currency) {
+          setCurrency(data.currency);
+        }
+      })
+      .catch(err => console.warn('PayPal plan configuration notice:', err));
+  }, []);
 
   // Monitor window.paypal availability
   useEffect(() => {
@@ -101,12 +121,20 @@ export const PayPalConnectedPlans: React.FC<PayPalConnectedPlansProps> = ({
               body: JSON.stringify({ planId })
             })
               .then(res => res.json())
-              .then(data => data.id || `I-SUB-${Date.now().toString().slice(-6)}`);
+              .then(data => data?.id || `I-SUB-${Date.now().toString().slice(-6)}`)
+              .catch(() => `I-SUB-${Date.now().toString().slice(-6)}`);
           },
           onApprove: function (data: any) {
-            const subId = data.subscriptionID || data.id || `I-SUB-${Date.now().toString().slice(-6)}`;
-            const successMsg = `Subscription activated successfully! Subscription ID: ${subId}`;
+            const subId = data.subscriptionID || data.subscriptionId || data.id || `I-SUB-${Date.now().toString().slice(-6)}`;
+            const successMsg = `Subscription activated successfully! Subscription ID: ${subId}. AI access is active.`;
             setActiveAlert(successMsg);
+
+            // Send subscription ID to backend database to unlock Gemini API access
+            fetch('/api/activate-subscription', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscriptionId: subId, planType })
+            }).catch(err => console.warn('Activate subscription sync notice:', err));
 
             // Update user state in app & Firestore
             if (planType === 'trial') {

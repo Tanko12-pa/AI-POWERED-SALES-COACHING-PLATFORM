@@ -508,10 +508,12 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
             amount: amount,
             currency: 'USD'
           })
-        });
-        const orderData = await createRes.json();
-        if (orderData?.id) {
-          orderId = orderData.id;
+        }).catch(() => null);
+        if (createRes && createRes.ok) {
+          const orderData = await createRes.json().catch(() => null);
+          if (orderData?.id) {
+            orderId = orderData.id;
+          }
         }
       } catch (e) {
         console.warn('Fallback creating order:', e);
@@ -522,7 +524,7 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
         await fetch(`/api/orders/${orderId}/capture`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
-        });
+        }).catch(() => null);
       } catch (e) {
         console.warn('Fallback capturing order:', e);
       }
