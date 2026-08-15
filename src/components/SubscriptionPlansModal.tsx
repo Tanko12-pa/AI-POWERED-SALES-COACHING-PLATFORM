@@ -40,7 +40,7 @@ export const SubscriptionPlansModal: React.FC = () => {
     simulateResetTrial
   } = useAuthSubscription();
 
-  const [activeTab, setActiveTab] = useState<'connected_plans' | 'plans' | 'hosted_buttons' | 'billing' | 'transition_settings' | 'paypal'>(
+  const [activeTab, setActiveTab] = useState<'connected_plans' | 'plans' | 'policy' | 'hosted_buttons' | 'billing' | 'transition_settings' | 'paypal'>(
     (subscriptionModalTab as any) || 'connected_plans'
   );
   const [selectedTransition, setSelectedTransition] = useState<SubscriptionPlanType>(
@@ -170,6 +170,18 @@ export const SubscriptionPlansModal: React.FC = () => {
               }`}
             >
               Plans & 7-Day Trial
+            </button>
+            <button
+              id="tab-subscription-policy-btn"
+              onClick={() => setActiveTab('policy')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'policy'
+                  ? 'bg-[#800000] text-[#A8C66C] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Policy & Terms</span>
             </button>
             <button
               onClick={() => setActiveTab('transition_settings')}
@@ -552,6 +564,145 @@ export const SubscriptionPlansModal: React.FC = () => {
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
                       Automatically charges selected plan (${currentUser?.subscription.selectedPlan === 'monthly' ? '15.99/mo' : '155.99/yr'}) for uninterrupted workflow.
                     </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB: SUBSCRIPTION & FREE TRIAL POLICY DOCUMENTATION */}
+          {activeTab === 'policy' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* Header Policy Banner */}
+              <div className="p-5 rounded-2xl bg-[#800000] text-white border border-[#A8C66C]/40 shadow-sm space-y-2">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#A8C66C]" />
+                  <h4 className="text-base font-black tracking-tight">
+                    Subscription and Free Trial Policy
+                  </h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-200">
+                  <span><strong>Application:</strong> AI-Powered Sales Coaching Platform</span>
+                  <span>•</span>
+                  <span><strong>Payment Gateway:</strong> PayPal REST API Integration</span>
+                  <span>•</span>
+                  <span><strong>Currency:</strong> CAD (Canadian Dollars)</span>
+                </div>
+              </div>
+
+              {/* Policy Section 1: 7-Day Free Trial */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <span className="w-6 h-6 rounded-lg bg-[#F3F8EA] dark:bg-slate-800 text-[#800000] dark:text-lime-400 text-xs font-black flex items-center justify-center">1</span>
+                  <h5 className="text-sm font-extrabold">7-Day Free Trial Policy</h5>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <strong>Trial Period:</strong> Every new user who registers on the AI-Powered Sales Coaching Platform is entitled to a <strong>7-Day Free Trial</strong> starting immediately upon account creation.
+                </p>
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  <strong className="text-[11px] uppercase tracking-wider text-slate-500 block">Feature Access:</strong>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Full AI Scorecard Analyzer</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Multimodal Call Audio Transcription</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Real-Time Speech Practice Pitch Lab</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Automated MEDDIC & Talk-to-Listen Breakdowns</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                  <Check className="w-4 h-4" />
+                  <span>Immediate Zero Charge: The platform requires $0.00 CAD upfront during registration for the trial period.</span>
+                </div>
+              </div>
+
+              {/* Policy Section 2: Trial Expiration & Access Restriction */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <span className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-xs font-black flex items-center justify-center">2</span>
+                  <h5 className="text-sm font-extrabold">Trial Expiration & Access Suspension</h5>
+                </div>
+                <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                  <li className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span><strong>Automatic Expiration Tracking:</strong> Upon reaching the 7th day (168 hours from account creation), the platform automatically tracks and marks the trial period as expired.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Shield className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <span><strong>Access Restriction:</strong> If an active subscription isn't confirmed by Day 7, the system temporarily restricts access to all premium coaching tools and dashboards.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ArrowRight className="w-4 h-4 text-[#800000] dark:text-red-400 shrink-0 mt-0.5" />
+                    <span><strong>Redirection:</strong> The user is automatically redirected to the Subscription & Billing Page upon logging in or attempting to access coaching features post-expiration.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Policy Section 3: Subscription Plans & Pricing */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-black flex items-center justify-center">3</span>
+                  <h5 className="text-sm font-extrabold">Subscription Plans & Pricing</h5>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-xs font-black text-slate-900 dark:text-slate-100">Monthly Pro Plan</strong>
+                      <span className="text-xs font-black text-[#800000] dark:text-red-400">$15.99 CAD / mo</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>• <strong>Billing Cycle:</strong> Monthly recurring billing</li>
+                      <li>• <strong>Flexibility:</strong> Cancel or modify at any time via settings or PayPal dashboard</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-[#A8C66C] bg-[#F3F8EA]/50 dark:bg-slate-850 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-xs font-black text-slate-900 dark:text-slate-100">Yearly Pro Plan (Save 18%)</strong>
+                      <span className="text-xs font-black text-[#800000] dark:text-red-400">$155.99 CAD / yr</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>• <strong>Equivalent Rate:</strong> $13.00 CAD / month (Saving $35.89 CAD/year)</li>
+                      <li>• <strong>Perks:</strong> Priority processing queue & advanced team coaching benchmarks</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Policy Section 4: Core System Automated Functions */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-black flex items-center justify-center">4</span>
+                  <h5 className="text-sm font-extrabold">Core System Automated Functions</h5>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <strong className="text-slate-900 dark:text-slate-100 block font-bold">1. Automated Trial Tracking</strong>
+                    <p className="text-[11px] text-slate-500">Maintains real-time countdowns based on account creation timestamps.</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <strong className="text-slate-900 dark:text-slate-100 block font-bold">2. 48-Hour Advance Expiration Notice</strong>
+                    <p className="text-[11px] text-slate-500">In-app banner notifications display starting Day 5 to remind users to select a plan.</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <strong className="text-slate-900 dark:text-slate-100 block font-bold">3. Instant Access Provisioning</strong>
+                    <p className="text-[11px] text-slate-500">Restores platform access within seconds of receiving successful PayPal webhooks.</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <strong className="text-slate-900 dark:text-slate-100 block font-bold">4. Dunning & Failure Handling</strong>
+                    <p className="text-[11px] text-slate-500">Flags accounts Past Due on billing failures and prompts payment method update.</p>
                   </div>
                 </div>
               </div>

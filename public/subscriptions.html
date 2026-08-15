@@ -3,202 +3,277 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI-Powered Sales Coaching Platform - Subscriptions</title>
-  
+  <title>AI-Powered Sales Coaching Platform</title>
+
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: #0d131f; color: #ffffff; margin: 0; padding: 2rem; }
-    
-    .pricing-grid {
+
+    /* Header Nav */
+    header {
       display: flex;
-      gap: 1.5rem;
-      justify-content: center;
+      justify-content: space-between;
+      align-items: center;
       max-width: 1100px;
       margin: 0 auto 2rem auto;
-      flex-wrap: wrap;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #1e293b;
     }
+    .auth-nav { display: flex; gap: 0.75rem; align-items: center; }
+    .btn-auth { background: #1e293b; color: #fff; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+    .btn-primary { background: #b91c1c; color: #fff; font-weight: bold; }
 
-    .card {
-      background: #141c2e;
-      border: 1px solid #23314a;
-      border-radius: 12px;
-      padding: 1.75rem;
-      flex: 1;
-      min-width: 300px;
-      max-width: 350px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .card.active-plan {
-      border: 2px solid #ea384d;
-      box-shadow: 0 0 15px rgba(234, 56, 77, 0.2);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-bottom: 0.75rem;
-    }
-    .badge-red { background: #b91c1c; color: #fff; }
+    /* Pricing Grid */
+    .pricing-grid { display: flex; gap: 1.5rem; justify-content: center; max-width: 1100px; margin: 0 auto; flex-wrap: wrap; }
+    .card { background: #141c2e; border: 1px solid #23314a; border-radius: 12px; padding: 1.75rem; flex: 1; min-width: 300px; max-width: 350px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card.highlight { border: 2px solid #00d084; }
+    
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .badge-red { background: #b91c1c; }
     .badge-blue { background: #1e3a8a; color: #60a5fa; }
     .badge-green { background: #84cc16; color: #1a2e05; }
-    .badge-active { background: #064e3b; color: #34d399; float: right; }
 
     .price { font-size: 2.2rem; font-weight: 800; color: #ff5252; margin: 0.5rem 0; }
-    .price span { font-size: 0.9rem; color: #94a3b8; font-weight: normal; }
-
     ul.features { list-style: none; padding: 0; margin: 1.5rem 0; font-size: 0.88rem; color: #cbd5e1; }
-    ul.features li { margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; }
-    ul.features li::before { content: "✓"; color: #34d399; font-weight: bold; }
+    ul.features li { margin-bottom: 0.75rem; }
+    ul.features li::before { content: "✓ "; color: #34d399; font-weight: bold; }
 
-    .paypal-button-container { margin-top: 1rem; min-height: 45px; }
+    .paypal-btn-container { margin-top: 1rem; min-height: 45px; }
 
-    /* Footer Status Bar */
-    .status-bar {
-      background: #1a2436;
-      border: 1px solid #2d3d59;
-      border-radius: 12px;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .status-info { display: flex; align-items: center; gap: 1rem; }
-    .status-pill { background: #064e3b; color: #34d399; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
-    .email-input { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 8px 12px; border-radius: 6px; width: 220px; }
-    .btn-quick { background: #ffc439; color: #111; font-weight: bold; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+    /* Modals */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
+    .modal-content { background: #162032; padding: 2rem; border-radius: 12px; width: 350px; border: 1px solid #334155; }
+    .modal-content input { width: 100%; padding: 10px; margin: 8px 0; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 6px; }
+    .modal-content button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
   </style>
 
-  <!-- Load PayPal SDK with vault and CAD currency -->
+  <!-- Load PayPal SDK -->
   <script src="https://www.paypal.com/sdk/js?client-id=BAAEeaPbIq6dCAVkztoxH_i7GSu4qvzw5b6pdAKVtcji2Dq4F7vQTIZqmvQWG7RWb0pQaSJMDfjpFlPjBk&vault=true&intent=subscription&currency=CAD"></script>
 </head>
 <body>
 
+  <!-- Top Header Navigation -->
+  <header>
+    <h2>AI Sales Coaching</h2>
+    <div class="auth-nav" id="auth-buttons">
+      <button class="btn-auth" onclick="openModal('modal-signin')">Sign In</button>
+      <button class="btn-auth btn-primary" onclick="openModal('modal-signup')">Sign Up (7-Day Trial)</button>
+    </div>
+    <div class="auth-nav" id="user-profile" style="display: none;">
+      <span id="user-display"></span>
+      <button class="btn-auth" onclick="openModal('modal-password')">Change Password</button>
+      <button class="btn-auth" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Connected Subscription Cards -->
   <main class="pricing-grid">
     
     <!-- 1. 7-Day Free Trial -->
     <div class="card">
       <div>
         <span class="badge badge-red">RISK-FREE</span>
-        <h2>7-Day Free Trial</h2>
-        <p style="font-size:0.8rem; color:#94a3b8;">Test all coaching capabilities free for 7 full days.</p>
-        <div class="price">$0.00 <span>/ 7 days</span></div>
-        <p style="font-size:0.75rem; color:#94a3b8;">Automatically transitions to your selected plan after Day 7.</p>
-        
+        <h3>7-Day Free Trial</h3>
+        <p style="font-size:0.8rem; color:#94a3b8;">Full access free for 7 days.</p>
+        <div class="price">$0.00 <span style="font-size:1rem;">/ 7 days</span></div>
         <ul class="features">
           <li>Full AI scorecard analyzer</li>
           <li>Multimodal call audio transcription</li>
           <li>Real-time speech practice pitch lab</li>
-          <li>Zero immediate credit card charge</li>
         </ul>
       </div>
-      <div id="paypal-btn-trial" class="paypal-button-container"></div>
+      <div id="paypal-btn-trial" class="paypal-btn-container"></div>
     </div>
 
     <!-- 2. Monthly Pro Plan -->
     <div class="card">
       <div>
         <span class="badge badge-blue">MONTHLY FLEX</span>
-        <h2>Monthly Pro Plan</h2>
-        <p style="font-size:0.8rem; color:#94a3b8;">Standalone monthly subscription with cancel-anytime flexibility.</p>
-        <div class="price">$15.99 <span>/ month</span></div>
-        <p style="font-size:0.75rem; color:#94a3b8;">Billed monthly.</p>
-
+        <h3>Monthly Pro Plan</h3>
+        <p style="font-size:0.8rem; color:#94a3b8;">Standalone monthly plan.</p>
+        <div class="price">$15.99 <span style="font-size:1rem;">/ month</span></div>
         <ul class="features">
           <li>Unlimited AI coaching sessions</li>
           <li>Full MEDDIC & talk-to-listen breakdowns</li>
-          <li>CRM automated deal stage triggers</li>
           <li>Cancel or switch at any time</li>
         </ul>
       </div>
-      <div id="paypal-btn-monthly" class="paypal-button-container"></div>
+      <div id="paypal-btn-monthly" class="paypal-btn-container"></div>
     </div>
 
     <!-- 3. Yearly Pro Plan -->
-    <div class="card active-plan">
+    <div class="card highlight">
       <div>
         <span class="badge badge-green">BEST VALUE - SAVE 18%</span>
-        <span class="badge badge-active">✓ Subscribed</span>
-        <h2>Yearly Pro Plan</h2>
-        <p style="font-size:0.8rem; color:#94a3b8;">Standalone annual subscription with 18% maximum savings.</p>
-        <div class="price">$155.99 <span>/ year</span></div>
-        <p style="font-size:0.75rem; color:#34d399;">Equivalent to $13.00 / month (Save $35.89 / year)</p>
-
+        <h3>Yearly Pro Plan</h3>
+        <p style="font-size:0.8rem; color:#94a3b8;">Annual plan with maximum savings.</p>
+        <div class="price">$155.99 <span style="font-size:1rem;">/ year</span></div>
         <ul class="features">
           <li>Everything in Monthly Pro Plan</li>
-          <li>Priority Gemini 3.6 processing queue</li>
-          <li>Advanced team coaching benchmarks</li>
-          <li>18% cost savings locked for 1 year</li>
+          <li>Priority processing queue</li>
+          <li>18% locked-in savings</li>
         </ul>
       </div>
-      <div id="paypal-btn-yearly" class="paypal-button-container"></div>
+      <div id="paypal-btn-yearly" class="paypal-btn-container"></div>
     </div>
 
   </main>
 
-  <!-- Bottom PayPal Gateway Status Bar -->
-  <footer class="status-bar">
-    <div class="status-info">
-      <strong style="color:#0070ba;">PayPal</strong>
-      <div>
-        <div style="font-size: 0.85rem; font-weight: bold;">PayPal REST API Connected & Verified <span class="status-pill">Sandbox Gateway Active</span></div>
-        <div style="font-size: 0.75rem; color: #64748b;">Client ID: BAAEeaPb...FlPjBk • Secure 256-bit encryption • Instant checkout</div>
-      </div>
+  <!-- AUTH MODALS -->
+  <!-- Sign Up -->
+  <div id="modal-signup" class="modal">
+    <div class="modal-content">
+      <h3>Create Account</h3>
+      <input type="text" id="signup-name" placeholder="Full Name" />
+      <input type="email" id="signup-email" placeholder="Email Address" />
+      <input type="password" id="signup-password" placeholder="Password" />
+      <button onclick="handleSignUp()">Sign Up & Proceed</button>
+      <button style="background:#475569;" onclick="closeModal('modal-signup')">Cancel</button>
     </div>
-    <div style="display:flex; gap:0.5rem;">
-      <input type="email" id="quick-email" class="email-input" value="alex.morgan@enterprise.ai" />
-      <button class="btn-quick" onclick="alert('Quick Checkout triggered for ' + document.getElementById('quick-email').value)">Quick Checkout</button>
+  </div>
+
+  <!-- Sign In -->
+  <div id="modal-signin" class="modal">
+    <div class="modal-content">
+      <h3>Sign In</h3>
+      <input type="email" id="signin-email" placeholder="Email Address" />
+      <input type="password" id="signin-password" placeholder="Password" />
+      <button onclick="handleSignIn()">Sign In</button>
+      <button style="background:#475569;" onclick="closeModal('modal-signin')">Cancel</button>
     </div>
-  </footer>
+  </div>
+
+  <!-- Change Password -->
+  <div id="modal-password" class="modal">
+    <div class="modal-content">
+      <h3>Change Password</h3>
+      <input type="password" id="current-password" placeholder="Current Password" />
+      <input type="password" id="new-password" placeholder="New Password" />
+      <button onclick="handleChangePassword()">Update Password</button>
+      <button style="background:#475569;" onclick="closeModal('modal-password')">Cancel</button>
+    </div>
+  </div>
 
   <script>
-    // Map plans to client side handlers using PayPal JS SDK
+    let currentUser = null;
+
     const PLAN_IDS = {
       trial: 'P-7DAYTRIALPLANID12345',
       monthly: 'P-MONTHLYPROPLANID67890',
       yearly: 'P-YEARLYPROPLANID11223'
     };
 
-    function renderPlanButton(containerSelector, planType, labelText) {
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    async function handleSignUp() {
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          currentUser = data.user;
+          updateUIAuth();
+          closeModal('modal-signup');
+          alert('Account created! Select a plan below to activate.');
+        } else {
+          alert(data.error || 'Failed to sign up');
+        }
+      } catch (e) {
+        alert('Network error during sign up');
+      }
+    }
+
+    async function handleSignIn() {
+      const email = document.getElementById('signin-email').value;
+      const password = document.getElementById('signin-password').value;
+
+      try {
+        const res = await fetch('/api/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          currentUser = data.user;
+          updateUIAuth();
+          closeModal('modal-signin');
+        } else {
+          alert(data.error || 'Invalid credentials');
+        }
+      } catch (e) {
+        alert('Network error during sign in');
+      }
+    }
+
+    async function handleChangePassword() {
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+
+      try {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser ? currentUser.email : '', currentPassword, newPassword })
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+        if (res.ok) closeModal('modal-password');
+      } catch (e) {
+        alert('Network error updating password');
+      }
+    }
+
+    function signOut() {
+      currentUser = null;
+      updateUIAuth();
+    }
+
+    function updateUIAuth() {
+      if (currentUser) {
+        document.getElementById('auth-buttons').style.display = 'none';
+        document.getElementById('user-profile').style.display = 'flex';
+        document.getElementById('user-display').innerText = `Hello, ${currentUser.name}`;
+      } else {
+        document.getElementById('auth-buttons').style.display = 'flex';
+        document.getElementById('user-profile').style.display = 'none';
+      }
+    }
+
+    // PayPal Buttons Initialization
+    function renderPayPalSubscription(containerSelector, planType) {
       if (!window.paypal || !window.paypal.Buttons) return;
       paypal.Buttons({
-        style: {
-          shape: 'rect',
-          color: planType === 'yearly' ? 'gold' : 'blue',
-          layout: 'vertical',
-          label: 'subscribe'
-        },
+        style: { shape: 'rect', color: planType === 'yearly' ? 'gold' : 'blue', layout: 'vertical' },
         createSubscription: function(data, actions) {
-          return actions.subscription.create({
-            'plan_id': PLAN_IDS[planType]
-          });
+          if (!currentUser) {
+            openModal('modal-signup');
+            return Promise.reject(new Error("User must sign up first."));
+          }
+          return actions.subscription.create({ 'plan_id': PLAN_IDS[planType] });
         },
         onApprove: function(data) {
-          alert(`Subscription successfully activated! Plan: ${planType.toUpperCase()} | Subscription ID: ${data.subscriptionID}`);
+          alert(`Subscription active! Plan: ${planType.toUpperCase()} | ID: ${data.subscriptionID}`);
         },
         onError: function(err) {
-          console.error(`PayPal Error [${planType}]:`, err);
+          console.warn('PayPal notice:', err);
         }
       }).render(containerSelector);
     }
 
-    // Render Smart Subscription Buttons for each plan when SDK loads
     window.addEventListener('load', function() {
       if (window.paypal && window.paypal.Buttons) {
-        renderPlanButton('#paypal-btn-trial', 'trial');
-        renderPlanButton('#paypal-btn-monthly', 'monthly');
-        renderPlanButton('#paypal-btn-yearly', 'yearly');
+        renderPayPalSubscription('#paypal-btn-trial', 'trial');
+        renderPayPalSubscription('#paypal-btn-monthly', 'monthly');
+        renderPayPalSubscription('#paypal-btn-yearly', 'yearly');
       }
     });
   </script>

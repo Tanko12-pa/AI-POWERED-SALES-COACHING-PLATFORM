@@ -83,10 +83,29 @@ export const Header: React.FC<HeaderProps> = ({
   const subscriptionStatus = currentUser?.subscription.status;
   const isTrial = subscriptionStatus === 'trialing';
   const trialDaysRemaining = currentUser?.subscription.trialDaysRemaining ?? 7;
+  const isTrialExpiringSoon = isTrial && trialDaysRemaining <= 2;
 
   return (
     <header id="main-header" className={`${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-200`}>
       
+      {/* 48-Hour Advance Trial Expiration Warning Banner (Day 5+) */}
+      {isTrialExpiringSoon && !trialNotification && (
+        <div className="bg-amber-600 dark:bg-amber-700 text-white px-4 py-1.5 text-xs font-bold flex items-center justify-between gap-3 border-b border-amber-500 shadow-xs animate-in slide-in-from-top-1">
+          <div className="flex items-center gap-2 max-w-5xl">
+            <Clock className="w-4 h-4 text-amber-200 shrink-0 animate-pulse" />
+            <span>
+              <strong>Advance Expiration Notice:</strong> Your 7-Day Free Trial expires in {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} (48-hour window). Select a Monthly ($15.99) or Yearly ($155.99) subscription to prevent service interruption.
+            </span>
+          </div>
+          <button
+            onClick={() => openSubscriptionModal('plans')}
+            className="px-2.5 py-0.5 rounded-lg bg-white text-amber-900 text-[11px] font-black hover:bg-amber-50 transition-all cursor-pointer shrink-0 shadow-xs"
+          >
+            Select Plan
+          </button>
+        </div>
+      )}
+
       {/* Dynamic Trial Auto-Transition / Welcome Banner */}
       {trialNotification && (
         <div className="bg-[#800000] text-white px-4 py-2 text-xs font-bold flex items-center justify-between gap-3 border-b border-[#A8C66C]/40 shadow-xs">

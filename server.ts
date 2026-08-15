@@ -12,6 +12,52 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// In-Memory User Store (Replace with DB like MongoDB/PostgreSQL/Firestore in production)
+const users = new Map<string, any>();
+
+/**
+ * 1. Auth Endpoints: Sign Up, Sign In, Change Password
+ */
+app.post('/api/auth/signup', (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+  if (users.has(email)) {
+    return res.status(400).json({ error: 'User already exists.' });
+  }
+
+  const newUser = { name, email, password, subscriptionStatus: 'inactive' };
+  users.set(email, newUser);
+  
+  res.status(201).json({ message: 'User created successfully.', user: { name, email } });
+});
+
+app.post('/api/auth/signin', (req, res) => {
+  const { email, password } = req.body;
+  const user = users.get(email);
+
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  res.status(200).json({ message: 'Sign in successful.', user: { name: user.name, email: user.email } });
+});
+
+app.post('/api/auth/change-password', (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  const user = users.get(email);
+
+  if (!user || user.password !== currentPassword) {
+    return res.status(401).json({ error: 'Incorrect current password.' });
+  }
+
+  user.password = newPassword;
+  users.set(email, user);
+
+  res.status(200).json({ message: 'Password updated successfully.' });
+});
+
 // Initialize Gemini Client Lazily
 function getGenAIClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -1870,6 +1916,32 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
 
     let logSummary = `Received ${event_type || 'Event'}`;
 
+    // Helper to find and update user in in-memory `users` store
+    const updateInMemUserStatus = (status: string, planName?: string) => {
+      // 1. Check custom_id, payer email, or subscriber email from webhook resource
+      const targetEmail = resource?.custom_id || 
+                          resource?.subscriber?.email_address || 
+                          resource?.payer?.email_address;
+
+      if (targetEmail && users.has(targetEmail)) {
+        const u = users.get(targetEmail);
+        u.subscriptionStatus = status;
+        if (planName) u.planName = planName;
+        u.lastPayment = new Date().toISOString();
+        users.set(targetEmail, u);
+        console.log(`Updated user ${targetEmail} subscriptionStatus to ${status}`);
+      } else {
+        // Also update any matching user if custom_id was not set
+        for (const [email, u] of users.entries()) {
+          if (u.subscriptionId === (resource?.id || resource?.billing_agreement_id)) {
+            u.subscriptionStatus = status;
+            users.set(email, u);
+            break;
+          }
+        }
+      }
+    };
+
     // 2. Handle relevant event types
     switch (event_type) {
       case "BILLING.SUBSCRIPTION.ACTIVATED":
@@ -1880,6 +1952,7 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
         currentUserSubscriptionState.status = 'active';
         currentUserSubscriptionState.subscriptionId = subscriptionId;
         currentUserSubscriptionState.lastWebhookSync = new Date().toISOString();
+        updateInMemUserStatus('active', resource?.plan_id);
         logSummary = `Subscription Activated (${subscriptionId}) - User access enabled`;
         break;
       }
@@ -1902,6 +1975,7 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
           plan: currentUserSubscriptionState.selectedPlan === 'yearly' ? 'Yearly Pro (CAD)' : 'Monthly Pro (CAD)',
           paymentMethod: 'PayPal Webhook Capture'
         });
+        updateInMemUserStatus('active');
         logSummary = `Payment Sale Captured: ${currency} $${amount} (Tx: ${transactionId})`;
         break;
       }
@@ -1911,6 +1985,7 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
         console.warn(`Payment failed for Subscription ${subscriptionId}`);
         currentUserSubscriptionState.status = 'past_due';
         currentUserSubscriptionState.lastWebhookSync = new Date().toISOString();
+        updateInMemUserStatus('past_due');
         logSummary = `Recurring billing failed for ${subscriptionId} - Marked Past Due`;
         break;
       }
@@ -1922,6 +1997,7 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
         currentUserSubscriptionState.status = 'cancelled';
         currentUserSubscriptionState.autoRenew = false;
         currentUserSubscriptionState.lastWebhookSync = new Date().toISOString();
+        updateInMemUserStatus('cancelled');
         logSummary = `Subscription ${subscriptionId} cancelled/suspended`;
         break;
       }
@@ -1929,6 +2005,7 @@ const handlePayPalWebhook = async (req: express.Request, res: express.Response) 
       case "CHECKOUT.ORDER.COMPLETED":
       case "CHECKOUT.ORDER.APPROVED": {
         const orderId = resource?.id;
+        updateInMemUserStatus('active');
         logSummary = `Order ${orderId} successfully captured`;
         break;
       }
