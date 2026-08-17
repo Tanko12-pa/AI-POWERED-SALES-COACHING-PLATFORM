@@ -26,8 +26,6 @@ import {
   Filter
 } from 'lucide-react';
 import { ActionTutorialOverlay } from './ActionTutorialOverlay';
-import { useAuthSubscription } from '../context/AuthSubscriptionContext';
-import { Zap, CreditCard, Clock } from 'lucide-react';
 
 export interface ActionTutoringItem {
   id: string;
@@ -379,14 +377,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
   onOpenSettings,
   loadingAction
 }) => {
-  const {
-    currentUser,
-    isAuthenticated,
-    openAuthModal,
-    openSubscriptionModal,
-    subscribeToPlan
-  } = useAuthSubscription();
-
   const [selectedTutorialAction, setSelectedTutorialAction] = useState<ActionTutoringItem | null>(null);
   const [expandedAccordionId, setExpandedAccordionId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -465,85 +455,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
         <span className="text-[10px] bg-[#F3F8EA] text-[#8BA854] dark:bg-slate-800 dark:text-[#A8C66C] font-extrabold px-2 py-0.5 rounded-full border border-[#A8C66C]">
           {filteredActions.length} / 10 Actions
         </span>
-      </div>
-
-      {/* 7-DAY FREE TRIAL & UNCONNECTED SUBSCRIPTIONS CARDS */}
-      <div className="mb-3 p-3 rounded-xl bg-gradient-to-br from-[#F3F8EA] via-white to-amber-50/40 dark:from-slate-800/90 dark:via-slate-800/50 dark:to-slate-900 border border-[#A8C66C] shadow-xs">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-[#800000] dark:text-lime-400 shrink-0" />
-            <span className="text-xs font-black text-slate-900 dark:text-slate-100">
-              {currentUser?.subscription.status === 'trialing'
-                ? `7-Day Free Trial (${currentUser.subscription.trialDaysRemaining}d remaining)`
-                : '7-Day Free Trial & Plans'}
-            </span>
-          </div>
-          <button
-            onClick={() => openSubscriptionModal('plans')}
-            className="text-[10px] font-extrabold text-[#800000] dark:text-lime-400 hover:underline cursor-pointer"
-          >
-            Manage Plans →
-          </button>
-        </div>
-
-        {/* Action buttons: 7-Day Trial, $15.99 Monthly, $155.99 Yearly (Standalone / Not connected) */}
-        <div className="grid grid-cols-3 gap-1.5">
-          <button
-            id="action-panel-start-trial-btn"
-            onClick={() => {
-              if (isAuthenticated) {
-                openSubscriptionModal('plans');
-              } else {
-                openAuthModal('trial');
-              }
-            }}
-            className="flex flex-col items-center justify-center p-2 rounded-lg bg-[#800000] text-white hover:bg-[#600000] transition-all text-center shadow-xs cursor-pointer"
-            title="Start 7-Day Free Trial ($0.00 today)"
-          >
-            <span className="text-[10px] font-black leading-tight text-[#A8C66C]">7-Day</span>
-            <span className="text-[11px] font-black leading-tight">Free Trial</span>
-            <span className="text-[9px] text-white/80">$0.00 today</span>
-          </button>
-
-          <button
-            id="action-panel-monthly-sub-btn"
-            onClick={() => {
-              if (isAuthenticated) {
-                subscribeToPlan('monthly');
-              } else {
-                openAuthModal('signup');
-              }
-            }}
-            className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:border-[#A8C66C] hover:bg-slate-50 dark:hover:bg-slate-750 transition-all text-center cursor-pointer shadow-xs"
-            title="Standalone Monthly Plan: $15.99/mo (not connected to yearly)"
-          >
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Monthly</span>
-            <span className="text-[11px] font-black text-[#800000] dark:text-lime-400 leading-tight">$15.99</span>
-            <span className="text-[9px] text-slate-400">per month</span>
-          </button>
-
-          <button
-            id="action-panel-yearly-sub-btn"
-            onClick={() => {
-              if (isAuthenticated) {
-                subscribeToPlan('yearly');
-              } else {
-                openAuthModal('signup');
-              }
-            }}
-            className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:border-[#A8C66C] hover:bg-slate-50 dark:hover:bg-slate-750 transition-all text-center cursor-pointer shadow-xs relative overflow-hidden"
-            title="Standalone Yearly Plan: $155.99/yr (not connected to monthly)"
-          >
-            <span className="absolute top-0 right-0 px-1 bg-emerald-600 text-[8px] font-bold text-white rounded-bl">Save 18%</span>
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Yearly</span>
-            <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 leading-tight">$155.99</span>
-            <span className="text-[9px] text-slate-400">per year</span>
-          </button>
-        </div>
-        
-        <p className="mt-1.5 text-[9px] text-slate-500 dark:text-slate-400 text-center font-medium">
-          Plans are standalone & not connected. After 7-day trial, auto-transitions to your selected plan.
-        </p>
       </div>
 
       {/* Accessibility Keyword Search Bar */}

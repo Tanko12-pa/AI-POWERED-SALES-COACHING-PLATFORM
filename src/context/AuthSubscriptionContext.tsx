@@ -5,9 +5,52 @@ import {
   SubscriptionPlanType,
   SubscriptionStatus,
   UserRole,
-  BillingInvoice
+  BillingInvoice,
+  PayPalWebhookPayload,
+  PayPalWebhookResult
 } from '../types';
 import { syncUserProfileToFirestore } from '../lib/firebase';
+
+// Utility function to clear all cookies, local/session storage, and Cache Storage
+export const clearBrowserCookiesAndCache = () => {
+  try {
+    // 1. Clear all accessible cookies
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      if (name) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname};`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
+      }
+    }
+  } catch (err) {
+    console.warn('Error clearing cookies:', err);
+  }
+
+  try {
+    // 2. Clear localStorage and sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch (err) {
+    console.warn('Error clearing Web Storage:', err);
+  }
+
+  try {
+    // 3. Clear CacheStorage API if available in browser
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          caches.delete(name);
+        });
+      }).catch((e) => console.warn('Cache API clear error:', e));
+    }
+  } catch (err) {
+    console.warn('Error clearing CacheStorage:', err);
+  }
+};
 
 interface AuthSubscriptionContextType {
   currentUser: UserAccount | null;
@@ -25,6 +68,7 @@ interface AuthSubscriptionContextType {
   openSubscriptionModal: (tab?: 'plans' | 'billing' | 'transition_settings') => void;
   closeSubscriptionModal: () => void;
   dismissTrialNotification: () => void;
+  clearCookiesAndCache: () => void;
   
   // Auth actions
   signIn: (email: string, password: string) => { success: boolean; error?: string };
@@ -36,55 +80,62 @@ interface AuthSubscriptionContextType {
   
   // Subscription actions
   startSevenDayFreeTrial: (selectedPlan?: SubscriptionPlanType) => void;
-  subscribeMonthly: () => void; // $15.99/mo standalone action
-  subscribeYearly: () => void; // $155.99/yr standalone action
+  subscribeMonthly: () => void;
+  subscribeYearly: () => void;
   subscribeWithPayPal: (planType: SubscriptionPlanType, payerEmail?: string) => Promise<{ success: boolean; orderId?: string; error?: string }>;
   cancelSubscription: () => void;
   changeTransitionPlan: (plan: SubscriptionPlanType) => void;
-  simulateTrialExpiration: () => void; // Fast-forward trial to test auto-transition
+  simulateTrialExpiration: () => void;
   simulateResetTrial: () => void;
+
+  // Status & Webhook Handlers
+  updateSubscriptionStatus: (
+    userId: string,
+    status: SubscriptionStatus,
+    options?: {
+      plan?: SubscriptionPlanType;
+      invoice?: BillingInvoice;
+      nextBillingDate?: string;
+      subscriptionId?: string;
+      lastWebhookEvent?: string;
+      amount?: number;
+      currency?: string;
+      notificationMessage?: string;
+      autoTransitionToPlan?: boolean;
+    }
+  ) => Promise<{ success: boolean; message: string; updatedUser?: UserAccount }>;
+  handlePayPalWebhookEvent: (payload: PayPalWebhookPayload) => PayPalWebhookResult;
+  triggerPayPalWebhookSimulation: (eventType: string, amount?: number, customId?: string) => Promise<PayPalWebhookResult>;
 }
 
-const STORAGE_AUTH_USER_KEY = 'ai_sales_coaching_auth_user_v1';
-const STORAGE_USERS_DB_KEY = 'ai_sales_coaching_users_db_v1';
+const STORAGE_AUTH_USER_KEY = 'ai_sales_coaching_auth_user_v2';
+const STORAGE_USERS_DB_KEY = 'ai_sales_coaching_users_db_v2';
 
-// Pre-seeded default users with realistic accounts
-const createDefaultSubscription = (status: SubscriptionStatus = 'trialing', plan: SubscriptionPlanType = 'monthly'): SubscriptionState => {
+// Pre-seeded default users with fully active, unrestricted access
+const createDefaultSubscription = (status: SubscriptionStatus = 'active_yearly', plan: SubscriptionPlanType = 'yearly'): SubscriptionState => {
   const now = new Date();
-  const startDate = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-  const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 5 days left
-
-  const initialInvoices: BillingInvoice[] = [
-    {
-      id: `inv-${Date.now().toString().slice(-6)}`,
-      date: startDate.toISOString().split('T')[0],
-      amount: 0.00,
-      description: '7-Day Free Trial Activated (Auto-transition configured)',
-      status: 'Trial',
-      plan: '7-Day Free Trial',
-      paymentMethod: 'Visa ending in 4242'
-    }
-  ];
+  const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const nextDate = new Date(now.getTime() + 335 * 24 * 60 * 60 * 1000);
 
   return {
-    status,
-    selectedPlan: plan,
+    status: 'active_yearly',
+    selectedPlan: 'yearly',
     monthlyPrice: 15.99,
     yearlyPrice: 155.99,
     trialStartDate: startDate.toISOString(),
-    trialEndDate: endDate.toISOString(),
-    trialDaysRemaining: 5,
-    autoTransitionToPlan: true,
-    transitionExecuted: false,
+    trialEndDate: startDate.toISOString(),
+    trialDaysRemaining: 0,
+    autoTransitionToPlan: false,
+    transitionExecuted: true,
     paymentMethod: {
       cardBrand: 'Visa',
       last4: '4242',
       expDate: '08/29',
       holderName: 'Alex Morgan'
     },
-    billingHistory: initialInvoices,
+    billingHistory: [],
     lastPaymentDate: startDate.toISOString().split('T')[0],
-    nextBillingDate: endDate.toISOString().split('T')[0]
+    nextBillingDate: nextDate.toISOString().split('T')[0]
   };
 };
 
@@ -95,7 +146,7 @@ const DEFAULT_USERS: UserAccount[] = [
     email: 'alex.morgan@enterprise.ai',
     password: 'Password123!',
     role: 'Admin',
-    subscription: createDefaultSubscription('trialing', 'monthly'),
+    subscription: createDefaultSubscription('active_yearly', 'yearly'),
     createdAt: '2026-08-01'
   },
   {
@@ -104,7 +155,7 @@ const DEFAULT_USERS: UserAccount[] = [
     email: 'sarah.chen@enterprise.ai',
     password: 'Password123!',
     role: 'Sales Manager',
-    subscription: createDefaultSubscription('active_monthly', 'monthly'),
+    subscription: createDefaultSubscription('active_yearly', 'yearly'),
     createdAt: '2026-07-15'
   },
   {
@@ -113,7 +164,7 @@ const DEFAULT_USERS: UserAccount[] = [
     email: 'john.doe@enterprise.ai',
     password: 'Password123!',
     role: 'Sales Rep',
-    subscription: createDefaultSubscription('trialing', 'yearly'),
+    subscription: createDefaultSubscription('active_yearly', 'yearly'),
     createdAt: '2026-08-05'
   }
 ];
@@ -644,6 +695,470 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
     setTrialNotification('🔄 Trial reset to full 7-day period (7 days remaining).');
   };
 
+  // Clear Cookies and Storage Cache
+  const handleClearCookiesAndCache = useCallback(() => {
+    clearBrowserCookiesAndCache();
+    // Reset memory state to pristine defaults
+    setRegisteredUsers(DEFAULT_USERS);
+    setCurrentUser(DEFAULT_USERS[0]);
+    setIsSubscriptionModalOpen(false);
+    setTrialNotification('✨ Browser cookies, web storage, and cache successfully cleaned!');
+  }, []);
+
+  // Update user subscription status, refresh state, and persist directly to Firestore database
+  const updateSubscriptionStatus = useCallback(async (
+    userId: string,
+    status: SubscriptionStatus,
+    options?: {
+      plan?: SubscriptionPlanType;
+      invoice?: BillingInvoice;
+      nextBillingDate?: string;
+      subscriptionId?: string;
+      lastWebhookEvent?: string;
+      amount?: number;
+      currency?: string;
+      notificationMessage?: string;
+      autoTransitionToPlan?: boolean;
+    }
+  ): Promise<{ success: boolean; message: string; updatedUser?: UserAccount }> => {
+    // 1. Locate target user
+    let targetUser = registeredUsers.find(
+      u => u.id === userId || u.email.toLowerCase() === (userId || '').toLowerCase()
+    );
+    if (!targetUser && currentUser) {
+      targetUser = currentUser;
+    }
+    if (!targetUser) {
+      targetUser = registeredUsers[0] || DEFAULT_USERS[0];
+    }
+
+    const isYearly = options?.plan === 'yearly' || status === 'active_yearly' || ((options?.amount || 0) >= 100);
+    const planType: SubscriptionPlanType = options?.plan || (isYearly ? 'yearly' : (status === 'active_monthly' ? 'monthly' : targetUser.subscription.selectedPlan || 'monthly'));
+    const subId = options?.subscriptionId || targetUser.subscription.subscriptionId || `I-SUB-${Date.now().toString().slice(-6)}`;
+
+    // Compute next billing date if not explicitly passed
+    let computedNextBilling = options?.nextBillingDate || targetUser.subscription.nextBillingDate;
+    if (!computedNextBilling && (status === 'active_monthly' || status === 'active_yearly')) {
+      const nextDate = new Date();
+      if (isYearly) {
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+      } else {
+        nextDate.setMonth(nextDate.getMonth() + 1);
+      }
+      computedNextBilling = nextDate.toISOString().split('T')[0];
+    }
+
+    // Prepare updated billing history if invoice provided
+    let updatedInvoices = targetUser.subscription.billingHistory;
+    if (options?.invoice) {
+      updatedInvoices = [options.invoice, ...targetUser.subscription.billingHistory.filter(i => i.id !== options.invoice!.id)];
+    }
+
+    const isPaidActive = status === 'active_monthly' || status === 'active_yearly';
+    const updatedSubscription: SubscriptionState = {
+      ...targetUser.subscription,
+      status,
+      selectedPlan: planType,
+      subscriptionId: subId,
+      nextBillingDate: computedNextBilling,
+      trialDaysRemaining: isPaidActive ? 0 : targetUser.subscription.trialDaysRemaining,
+      transitionExecuted: isPaidActive ? true : targetUser.subscription.transitionExecuted,
+      autoTransitionToPlan: options?.autoTransitionToPlan !== undefined ? options.autoTransitionToPlan : (status !== 'canceled'),
+      lastPaymentDate: (options?.amount || options?.invoice) ? new Date().toISOString().split('T')[0] : targetUser.subscription.lastPaymentDate,
+      lastWebhookSync: new Date().toISOString(),
+      billingHistory: updatedInvoices
+    };
+
+    const updatedUser: UserAccount = {
+      ...targetUser,
+      subscription: updatedSubscription
+    };
+
+    // Update in-memory & React state
+    setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+    if (currentUser && currentUser.id === updatedUser.id) {
+      setCurrentUser(updatedUser);
+    }
+
+    // Persist to Cloud Firestore database
+    try {
+      await syncUserProfileToFirestore(updatedUser.id, {
+        userId: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        subscriptionStatus: updatedSubscription.status,
+        plan: updatedSubscription.selectedPlan,
+        subscriptionId: updatedSubscription.subscriptionId,
+        trialDaysRemaining: updatedSubscription.trialDaysRemaining,
+        nextBillingDate: updatedSubscription.nextBillingDate,
+        lastPaymentDate: updatedSubscription.lastPaymentDate,
+        lastWebhookEvent: options?.lastWebhookEvent || 'UPDATE_SUBSCRIPTION_STATUS',
+        lastWebhookSync: updatedSubscription.lastWebhookSync
+      });
+    } catch (err) {
+      console.warn('Firestore subscription sync notice in updateSubscriptionStatus:', err);
+    }
+
+    const resultMessage = options?.notificationMessage || `Subscription status for ${updatedUser.email} updated to ${status}.`;
+    setTrialNotification(resultMessage);
+
+    return {
+      success: true,
+      message: resultMessage,
+      updatedUser
+    };
+  }, [currentUser, registeredUsers]);
+
+  // Dedicated PayPal Subscription Webhook Handler
+  const handlePayPalWebhookEvent = useCallback((payload: PayPalWebhookPayload): PayPalWebhookResult => {
+    if (!payload || !payload.event_type) {
+      return {
+        success: false,
+        message: 'Invalid PayPal webhook payload: missing event_type.',
+        eventType: 'UNKNOWN'
+      };
+    }
+
+    const { event_type, resource } = payload;
+    const normalizedType = event_type.toUpperCase().trim();
+
+    // 1. Identify Target User:
+    // Match by custom_id, subscriber email, payer email, subscriptionId or currently active user
+    const subscriberEmail = resource?.subscriber?.email_address?.toLowerCase()?.trim();
+    const payerEmail = resource?.payer?.email_address?.toLowerCase()?.trim();
+    const customId = resource?.custom_id?.toLowerCase()?.trim();
+    const subId = resource?.id || resource?.billing_agreement_id;
+
+    let targetUser: UserAccount | undefined = undefined;
+
+    if (customId) {
+      targetUser = registeredUsers.find(u => u.id === customId || u.email.toLowerCase() === customId);
+    }
+    if (!targetUser && subscriberEmail) {
+      targetUser = registeredUsers.find(u => u.email.toLowerCase() === subscriberEmail);
+    }
+    if (!targetUser && payerEmail) {
+      targetUser = registeredUsers.find(u => u.email.toLowerCase() === payerEmail);
+    }
+    if (!targetUser && subId) {
+      targetUser = registeredUsers.find(u => u.subscription?.subscriptionId === subId);
+    }
+    if (!targetUser && currentUser) {
+      targetUser = currentUser;
+    }
+    if (!targetUser) {
+      targetUser = registeredUsers[0] || DEFAULT_USERS[0];
+    }
+
+    // 2. Process specific webhook event types
+    switch (normalizedType) {
+      case 'PAYMENT.SALE.COMPLETED':
+      case 'PAYMENT.CAPTURE.COMPLETED':
+      case 'CHECKOUT.ORDER.COMPLETED': {
+        const rawAmount = resource?.amount?.value || resource?.amount?.total;
+        const amountNum = rawAmount ? Number(rawAmount) : (targetUser.subscription.selectedPlan === 'yearly' ? 155.99 : 15.99);
+        const currency = resource?.amount?.currency || 'CAD';
+        const isYearly = amountNum >= 100 || targetUser.subscription.selectedPlan === 'yearly' || resource?.plan_id?.includes('YEARLY');
+        const planName = isYearly ? '$155.99 / Yearly' : '$15.99 / Monthly';
+        const newStatus: SubscriptionStatus = isYearly ? 'active_yearly' : 'active_monthly';
+        const planType: SubscriptionPlanType = isYearly ? 'yearly' : 'monthly';
+        const txId = resource?.id || `TX-WH-${Date.now().toString().slice(-6)}`;
+
+        const nextDate = new Date();
+        if (isYearly) {
+          nextDate.setFullYear(nextDate.getFullYear() + 1);
+        } else {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+        }
+
+        const invoice: BillingInvoice = {
+          id: `inv-wh-${txId.replace(/[^a-zA-Z0-9_-]/g, '').slice(-8)}`,
+          date: new Date().toISOString().split('T')[0],
+          amount: amountNum,
+          description: `PayPal Webhook: Payment of $${amountNum.toFixed(2)} ${currency} Captured (Tx #${txId})`,
+          status: 'Paid',
+          plan: planName as any,
+          paymentMethod: `PayPal Webhook (${payerEmail || subscriberEmail || targetUser.email})`
+        };
+
+        const updatedSubscription: SubscriptionState = {
+          ...targetUser.subscription,
+          status: newStatus,
+          selectedPlan: planType,
+          trialDaysRemaining: 0,
+          transitionExecuted: true,
+          subscriptionId: subId || targetUser.subscription.subscriptionId || `I-WH-${Date.now().toString().slice(-6)}`,
+          lastPaymentDate: new Date().toISOString().split('T')[0],
+          nextBillingDate: nextDate.toISOString().split('T')[0],
+          lastWebhookSync: new Date().toISOString(),
+          paymentMethod: {
+            cardBrand: 'PayPal',
+            last4: 'WEBHOOK',
+            expDate: 'N/A',
+            holderName: payerEmail || subscriberEmail || targetUser.name
+          },
+          billingHistory: [invoice, ...targetUser.subscription.billingHistory.filter(i => i.id !== invoice.id)]
+        };
+
+        const updatedUser: UserAccount = {
+          ...targetUser,
+          subscription: updatedSubscription
+        };
+
+        setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+        if (currentUser && currentUser.id === updatedUser.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        syncUserProfileToFirestore(updatedUser.id, {
+          userId: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          subscriptionStatus: updatedSubscription.status,
+          plan: updatedSubscription.selectedPlan,
+          currency,
+          trialDaysRemaining: 0,
+          nextBillingDate: updatedSubscription.nextBillingDate,
+          lastWebhookEvent: normalizedType,
+          lastWebhookSync: updatedSubscription.lastWebhookSync
+        });
+
+        const successMsg = `🎉 PayPal Webhook: Payment of $${amountNum.toFixed(2)} ${currency} completed! User ${updatedUser.email} status updated to ${newStatus}.`;
+        setTrialNotification(successMsg);
+
+        return {
+          success: true,
+          message: successMsg,
+          eventType: normalizedType,
+          userEmail: updatedUser.email,
+          updatedStatus: newStatus,
+          updatedPlan: planType,
+          invoiceId: invoice.id
+        };
+      }
+
+      case 'SUBSCRIPTION.ACTIVATED':
+      case 'BILLING.SUBSCRIPTION.ACTIVATED':
+      case 'BILLING.SUBSCRIPTION.CREATED':
+      case 'BILLING.SUBSCRIPTION.RE-ACTIVATED': {
+        const isYearly = resource?.plan_id?.includes('YEARLY') || targetUser.subscription.selectedPlan === 'yearly';
+        const newStatus: SubscriptionStatus = isYearly ? 'active_yearly' : 'active_monthly';
+        const planType: SubscriptionPlanType = isYearly ? 'yearly' : 'monthly';
+        const activeSubId = subId || `I-ACT-${Date.now().toString().slice(-6)}`;
+
+        const nextDate = new Date();
+        if (isYearly) {
+          nextDate.setFullYear(nextDate.getFullYear() + 1);
+        } else {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+        }
+
+        const updatedSubscription: SubscriptionState = {
+          ...targetUser.subscription,
+          status: newStatus,
+          selectedPlan: planType,
+          trialDaysRemaining: 0,
+          transitionExecuted: true,
+          subscriptionId: activeSubId,
+          nextBillingDate: nextDate.toISOString().split('T')[0],
+          lastWebhookSync: new Date().toISOString()
+        };
+
+        const updatedUser: UserAccount = {
+          ...targetUser,
+          subscription: updatedSubscription
+        };
+
+        setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+        if (currentUser && currentUser.id === updatedUser.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        syncUserProfileToFirestore(updatedUser.id, {
+          userId: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          subscriptionStatus: updatedSubscription.status,
+          plan: updatedSubscription.selectedPlan,
+          subscriptionId: activeSubId,
+          trialDaysRemaining: 0,
+          nextBillingDate: updatedSubscription.nextBillingDate,
+          lastWebhookEvent: normalizedType,
+          lastWebhookSync: updatedSubscription.lastWebhookSync
+        });
+
+        const successMsg = `⚡ PayPal Webhook: Subscription ${activeSubId} activated! User ${updatedUser.email} has full ${isYearly ? 'Yearly' : 'Monthly'} access.`;
+        setTrialNotification(successMsg);
+
+        return {
+          success: true,
+          message: successMsg,
+          eventType: normalizedType,
+          userEmail: updatedUser.email,
+          updatedStatus: newStatus,
+          updatedPlan: planType
+        };
+      }
+
+      case 'BILLING.SUBSCRIPTION.CANCELLED':
+      case 'BILLING.SUBSCRIPTION.SUSPENDED':
+      case 'BILLING.SUBSCRIPTION.EXPIRED': {
+        const updatedSubscription: SubscriptionState = {
+          ...targetUser.subscription,
+          status: 'canceled',
+          autoTransitionToPlan: false,
+          lastWebhookSync: new Date().toISOString()
+        };
+
+        const updatedUser: UserAccount = {
+          ...targetUser,
+          subscription: updatedSubscription
+        };
+
+        setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+        if (currentUser && currentUser.id === updatedUser.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        syncUserProfileToFirestore(updatedUser.id, {
+          userId: updatedUser.id,
+          subscriptionStatus: 'canceled',
+          lastWebhookEvent: normalizedType,
+          lastWebhookSync: updatedSubscription.lastWebhookSync
+        });
+
+        const cancelMsg = `⚠️ PayPal Webhook: Subscription was cancelled/suspended for ${updatedUser.email}. Access maintained until end of billing period.`;
+        setTrialNotification(cancelMsg);
+
+        return {
+          success: true,
+          message: cancelMsg,
+          eventType: normalizedType,
+          userEmail: updatedUser.email,
+          updatedStatus: 'canceled'
+        };
+      }
+
+      case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED': {
+        const updatedSubscription: SubscriptionState = {
+          ...targetUser.subscription,
+          status: 'past_due',
+          lastWebhookSync: new Date().toISOString()
+        };
+
+        const updatedUser: UserAccount = {
+          ...targetUser,
+          subscription: updatedSubscription
+        };
+
+        setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+        if (currentUser && currentUser.id === updatedUser.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        const failMsg = `⚠️ PayPal Webhook: Recurring billing payment failed for ${updatedUser.email}. Marked Past Due.`;
+        setTrialNotification(failMsg);
+
+        return {
+          success: true,
+          message: failMsg,
+          eventType: normalizedType,
+          userEmail: updatedUser.email,
+          updatedStatus: 'past_due'
+        };
+      }
+
+      default: {
+        const infoMsg = `ℹ️ PayPal Webhook: Processed event ${normalizedType}`;
+        return {
+          success: true,
+          message: infoMsg,
+          eventType: normalizedType,
+          userEmail: targetUser.email
+        };
+      }
+    }
+  }, [currentUser, registeredUsers]);
+
+  // Trigger test webhook simulation (both frontend handler and backend logger)
+  const triggerPayPalWebhookSimulation = useCallback(async (
+    eventType: string,
+    amount?: number,
+    customId?: string
+  ): Promise<PayPalWebhookResult> => {
+    const selectedType = eventType || 'PAYMENT.SALE.COMPLETED';
+    const amountVal = amount || (currentUser?.subscription.selectedPlan === 'yearly' ? 155.99 : 15.99);
+    const targetUserId = customId || currentUser?.id || 'usr-sales-rep-1';
+    const mockTxId = `TX-${Date.now().toString().slice(-8)}`;
+
+    const syntheticPayload: PayPalWebhookPayload = {
+      id: `WH-SIM-${Date.now()}`,
+      event_version: '1.0',
+      create_time: new Date().toISOString(),
+      event_type: selectedType,
+      resource_type: selectedType.includes('PAYMENT') ? 'sale' : 'subscription',
+      summary: `Simulated ${selectedType} Webhook for immediate real-time testing`,
+      resource: {
+        id: mockTxId,
+        billing_agreement_id: currentUser?.subscription.subscriptionId || 'I-PAYPAL-SUB-101',
+        plan_id: amountVal >= 100 ? 'P-8J3274500K107715XNKAAVMQ' : 'P-28K50161X57516321NKAASOY',
+        amount: {
+          total: amountVal.toFixed(2),
+          value: amountVal.toFixed(2),
+          currency: 'CAD'
+        },
+        custom_id: targetUserId,
+        subscriber: {
+          email_address: currentUser?.email || 'alex.turner@vortexsales.ai',
+          name: { given_name: currentUser?.name || 'Alex Turner' }
+        },
+        payer: {
+          email_address: currentUser?.email || 'alex.turner@vortexsales.ai'
+        },
+        status: 'COMPLETED'
+      }
+    };
+
+    // Ping backend endpoint in parallel for telemetry logs
+    try {
+      fetch('/api/webhooks/paypal/test-ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: selectedType,
+          testAmount: amountVal,
+          customNote: `Simulation from Webhook test dispatcher for ${currentUser?.email}`
+        })
+      }).catch(err => console.warn('Server test-ping notice:', err));
+    } catch (e) {
+      console.warn('Backend ping notice:', e);
+    }
+
+    // Process directly through frontend Webhook Handler
+    return handlePayPalWebhookEvent(syntheticPayload);
+  }, [currentUser, handlePayPalWebhookEvent]);
+
+  // Global window listener for custom webhook events
+  useEffect(() => {
+    const onWebhookReceived = (event: Event) => {
+      const customEvt = event as CustomEvent;
+      if (customEvt && customEvt.detail) {
+        handlePayPalWebhookEvent(customEvt.detail);
+      }
+    };
+
+    window.addEventListener('paypal:webhook', onWebhookReceived);
+    window.addEventListener('paypal-webhook-event', onWebhookReceived);
+
+    return () => {
+      window.removeEventListener('paypal:webhook', onWebhookReceived);
+      window.removeEventListener('paypal-webhook-event', onWebhookReceived);
+    };
+  }, [handlePayPalWebhookEvent]);
+
   return (
     <AuthSubscriptionContext.Provider
       value={{
@@ -660,6 +1175,7 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
         openSubscriptionModal,
         closeSubscriptionModal,
         dismissTrialNotification,
+        clearCookiesAndCache: handleClearCookiesAndCache,
         signIn,
         signUp,
         signOut,
@@ -673,7 +1189,10 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
         cancelSubscription,
         changeTransitionPlan,
         simulateTrialExpiration,
-        simulateResetTrial
+        simulateResetTrial,
+        updateSubscriptionStatus,
+        handlePayPalWebhookEvent,
+        triggerPayPalWebhookSimulation
       }}
     >
       {children}

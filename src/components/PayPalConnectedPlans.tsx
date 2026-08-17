@@ -21,8 +21,8 @@ declare global {
 
 export const DEFAULT_PLAN_IDS = {
   TRIAL: 'P-7DAYTRIALPLANID12345',      // 7-day trial ($0) transitioning to $15.99/mo CAD
-  MONTHLY: 'P-MONTHLYPROPLANID67890',  // Standalone $15.99/mo CAD recurring plan
-  YEARLY: 'P-YEARLYPROPLANID11223'     // Standalone $155.99/yr CAD recurring plan
+  MONTHLY: 'P-28K50161X57516321NKAASOY',  // Standalone $15.99/mo CAD recurring plan
+  YEARLY: 'P-8J3274500K107715XNKAAVMQ'     // Standalone $155.99/yr CAD recurring plan (18% Savings)
 };
 
 interface PayPalConnectedPlansProps {

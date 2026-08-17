@@ -16,15 +16,13 @@ import {
   Sun,
   Moon,
   Building2,
-  Zap,
   LogIn,
   LogOut,
   UserPlus,
-  CreditCard,
   ChevronDown,
   KeyRound,
   CheckCircle2,
-  Clock
+  CreditCard
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAuthSubscription } from '../context/AuthSubscriptionContext';
@@ -65,13 +63,22 @@ export const Header: React.FC<HeaderProps> = ({
     openSubscriptionModal,
     signOut,
     trialNotification,
-    dismissTrialNotification
+    dismissTrialNotification,
+    clearCookiesAndCache
   } = useAuthSubscription();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [cleanedToast, setCleanedToast] = useState(false);
+
+  const handleCleanCookiesAndCache = () => {
+    clearCookiesAndCache();
+    setCleanedToast(true);
+    setTimeout(() => setCleanedToast(false), 3000);
+  };
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard & Coaching', icon: LayoutDashboard },
+    { id: 'billing', label: 'Subscription & Billing', icon: CreditCard },
     { id: 'software', label: 'Software Directory & Guide', icon: Building2 },
     { id: 'marketing', label: 'Marketing Language', icon: Megaphone },
     { id: 'targeting', label: 'Audience Targeting', icon: Target },
@@ -80,53 +87,22 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'settings', label: 'Settings & Playbooks', icon: Settings }
   ];
 
-  const subscriptionStatus = currentUser?.subscription.status;
-  const isTrial = subscriptionStatus === 'trialing';
-  const trialDaysRemaining = currentUser?.subscription.trialDaysRemaining ?? 7;
-  const isTrialExpiringSoon = isTrial && trialDaysRemaining <= 2;
-
   return (
     <header id="main-header" className={`${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-200`}>
       
-      {/* 48-Hour Advance Trial Expiration Warning Banner (Day 5+) */}
-      {isTrialExpiringSoon && !trialNotification && (
-        <div className="bg-amber-600 dark:bg-amber-700 text-white px-4 py-1.5 text-xs font-bold flex items-center justify-between gap-3 border-b border-amber-500 shadow-xs animate-in slide-in-from-top-1">
+      {/* Toast notification for cache/cookie clearing */}
+      {cleanedToast && (
+        <div className="bg-[#800000] text-white px-4 py-2 text-xs font-bold flex items-center justify-between gap-3 border-b border-[#A8C66C]/40 shadow-xs animate-in slide-in-from-top-1">
           <div className="flex items-center gap-2 max-w-5xl">
-            <Clock className="w-4 h-4 text-amber-200 shrink-0 animate-pulse" />
-            <span>
-              <strong>Advance Expiration Notice:</strong> Your 7-Day Free Trial expires in {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} (48-hour window). Select a Monthly ($15.99) or Yearly ($155.99) subscription to prevent service interruption.
-            </span>
+            <Sparkles className="w-4 h-4 text-[#A8C66C] shrink-0" />
+            <span>✨ All cookies, web storage, and cache cleaned successfully!</span>
           </div>
           <button
-            onClick={() => openSubscriptionModal('plans')}
-            className="px-2.5 py-0.5 rounded-lg bg-white text-amber-900 text-[11px] font-black hover:bg-amber-50 transition-all cursor-pointer shrink-0 shadow-xs"
+            onClick={() => setCleanedToast(false)}
+            className="text-white/80 hover:text-white text-xs px-2 py-0.5 rounded bg-black/20 hover:bg-black/30 font-bold cursor-pointer"
           >
-            Select Plan
+            Dismiss
           </button>
-        </div>
-      )}
-
-      {/* Dynamic Trial Auto-Transition / Welcome Banner */}
-      {trialNotification && (
-        <div className="bg-[#800000] text-white px-4 py-2 text-xs font-bold flex items-center justify-between gap-3 border-b border-[#A8C66C]/40 shadow-xs">
-          <div className="flex items-center gap-2 max-w-5xl">
-            <Zap className="w-4 h-4 text-[#A8C66C] shrink-0" />
-            <span>{trialNotification}</span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => openSubscriptionModal('plans')}
-              className="px-2.5 py-0.5 rounded-lg bg-[#A8C66C] text-[#800000] text-[11px] font-black hover:bg-white transition-all cursor-pointer"
-            >
-              View Plans
-            </button>
-            <button
-              onClick={dismissTrialNotification}
-              className="text-white/80 hover:text-white text-xs px-1 font-bold cursor-pointer"
-            >
-              Dismiss
-            </button>
-          </div>
         </div>
       )}
 
@@ -142,16 +118,9 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className={`text-lg sm:text-xl font-extrabold tracking-tight ${isDarkMode ? 'text-red-400' : 'text-[#800000]'}`}>
                 AI-Powered Sales Coaching Platform
               </h1>
-              {isTrial && (
-                <button
-                  onClick={() => openSubscriptionModal('plans')}
-                  className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F3F8EA] dark:bg-slate-800 border border-[#A8C66C] text-[#800000] dark:text-lime-400 text-[10px] font-black hover:scale-105 transition-all cursor-pointer"
-                  title="7-Day Free Trial active. Click to view auto-transition details."
-                >
-                  <Clock className="w-3 h-3 text-[#800000] dark:text-lime-400" />
-                  <span>7-Day Trial: {trialDaysRemaining}d left</span>
-                </button>
-              )}
+              <span className="hidden md:inline-block px-2.5 py-0.5 rounded-full bg-[#F3F8EA] dark:bg-slate-800 text-[#800000] dark:text-lime-400 text-[10px] font-black border border-[#A8C66C]">
+                Enterprise Edition
+              </span>
             </div>
             <p className={`text-xs font-medium hidden sm:block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
               Revenue intelligence, coaching, and marketing optimization in one AI workspace.
@@ -181,36 +150,15 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Status Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           
-          {/* PRIMARY 7-DAY FREE TRIAL BUTTON */}
+          {/* Quick Clean Cookies & Cache Button */}
           <button
-            id="header-7day-trial-btn"
-            onClick={() => {
-              if (isAuthenticated) {
-                openSubscriptionModal('plans');
-              } else {
-                openAuthModal('trial');
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-[#800000] text-white hover:bg-[#600000] border border-[#A8C66C] shadow-sm transition-all hover:scale-102 cursor-pointer shrink-0"
-            title="Start 7-Day Free Trial ($0.00 today)"
+            id="header-clean-cache-btn"
+            onClick={handleCleanCookiesAndCache}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-2xs transition-all cursor-pointer"
+            title="Clean browser cache, cookies, and local session storage"
           >
-            <Zap className="w-3.5 h-3.5 text-[#A8C66C] animate-pulse" />
-            <span>7-Day Free Trial</span>
-          </button>
-
-          {/* STANDALONE SUBSCRIPTION BUTTONS TRIGGER ($15.99 / $155.99) */}
-          <button
-            id="header-subscription-plans-btn"
-            onClick={() => openSubscriptionModal('plans')}
-            className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
-              isDarkMode
-                ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
-                : 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200'
-            }`}
-            title="View Monthly ($15.99) and Yearly ($155.99) standalone plans"
-          >
-            <CreditCard className="w-3.5 h-3.5 text-[#800000] dark:text-red-400" />
-            <span>Plans ($15.99 / $155.99)</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-[#800000] dark:text-red-400" />
+            <span className="hidden md:inline">Clean Cache</span>
           </button>
 
           {/* Theme Toggle Button */}
@@ -275,6 +223,21 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
+          {/* Quick Billing / Subscription Access Button */}
+          <button
+            id="header-billing-btn"
+            onClick={() => setActiveTab('billing')}
+            className={`hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+              activeTab === 'billing'
+                ? 'bg-[#800000] text-white border-[#800000] shadow-xs'
+                : 'bg-[#F3F8EA] dark:bg-slate-800 text-[#800000] dark:text-lime-400 border-[#A8C66C] hover:bg-[#E9F3DC]'
+            }`}
+            title="Subscription & Billing: $15.99/mo or $155.99/yr"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Billing ($15.99/$155.99)</span>
+          </button>
+
           {/* AUTH SECTION: SIGN IN, SIGN UP, SIGN OUT & PROFILE */}
           {!isAuthenticated ? (
             <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800">
@@ -337,12 +300,23 @@ export const Header: React.FC<HeaderProps> = ({
                           {currentUser.role}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-[#F3F8EA] dark:bg-slate-800 text-[#800000] dark:text-lime-400 text-[9px] font-bold border border-[#A8C66C]">
-                          {isTrial ? `Trial (${trialDaysRemaining}d)` : currentUser.subscription.status}
+                          Active Pro
                         </span>
                       </div>
                     </div>
 
                     <div className="py-1 space-y-0.5 text-xs">
+                      <button
+                        onClick={() => {
+                          setActiveTab('billing');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-slate-700 dark:text-slate-300 hover:bg-[#F3F8EA] dark:hover:bg-slate-800 font-semibold cursor-pointer"
+                      >
+                        <CreditCard className="w-4 h-4 text-[#800000]" />
+                        <span>Subscription & Billing</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           openAuthModal('profile');
@@ -356,24 +330,13 @@ export const Header: React.FC<HeaderProps> = ({
 
                       <button
                         onClick={() => {
-                          openSubscriptionModal('plans');
+                          handleCleanCookiesAndCache();
                           setShowUserMenu(false);
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                       >
-                        <CreditCard className="w-4 h-4 text-emerald-600" />
-                        <span>Plans & Subscriptions</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          openSubscriptionModal('transition_settings');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
-                      >
-                        <Zap className="w-4 h-4 text-[#A8C66C]" />
-                        <span>7-Day Expiry Simulation</span>
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <span>Clean Cookies & Cache</span>
                       </button>
                     </div>
 

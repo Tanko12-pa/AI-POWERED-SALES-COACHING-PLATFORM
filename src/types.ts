@@ -279,7 +279,8 @@ export type SubscriptionStatus =
   | 'active_yearly'
   | 'expired_trial'
   | 'free_tier'
-  | 'canceled';
+  | 'canceled'
+  | 'past_due';
 
 export interface BillingInvoice {
   id: string;
@@ -311,6 +312,8 @@ export interface SubscriptionState {
   billingHistory: BillingInvoice[];
   lastPaymentDate?: string;
   nextBillingDate?: string;
+  subscriptionId?: string;
+  lastWebhookSync?: string;
 }
 
 export interface UserAccount {
@@ -322,5 +325,56 @@ export interface UserAccount {
   avatarUrl?: string;
   subscription: SubscriptionState;
   createdAt: string;
+}
+
+export interface PayPalWebhookEventResource {
+  id?: string;
+  billing_agreement_id?: string;
+  plan_id?: string;
+  amount?: {
+    total?: string;
+    value?: string;
+    currency?: string;
+  };
+  subscriber?: {
+    email_address?: string;
+    name?: { given_name?: string; surname?: string };
+    payer_id?: string;
+  };
+  payer?: {
+    email_address?: string;
+    payer_id?: string;
+    name?: { given_name?: string; surname?: string };
+  };
+  custom_id?: string;
+  status?: string;
+  start_time?: string;
+  create_time?: string;
+  update_time?: string;
+  next_billing_time?: string;
+  last_payment?: {
+    amount?: { value?: string; currency?: string };
+    time?: string;
+  };
+}
+
+export interface PayPalWebhookPayload {
+  id?: string;
+  event_version?: string;
+  create_time?: string;
+  resource_type?: string;
+  event_type: string;
+  summary?: string;
+  resource?: PayPalWebhookEventResource;
+}
+
+export interface PayPalWebhookResult {
+  success: boolean;
+  message: string;
+  eventType: string;
+  userEmail?: string;
+  updatedStatus?: SubscriptionStatus;
+  updatedPlan?: SubscriptionPlanType;
+  invoiceId?: string;
 }
 

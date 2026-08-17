@@ -179,10 +179,9 @@ export const AuthModal: React.FC = () => {
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 {tab === 'signin' && 'Access your coaching feed, deal scorecards, and playbooks.'}
-                {tab === 'signup' && 'Full AI platform access. No immediate payment required.'}
-                {tab === 'trial' && '7 days free, auto-transitioning to your chosen plan.'}
+                {tab === 'signup' && 'Full AI platform access. Instant enterprise workspace.'}
                 {tab === 'reset' && 'View, verify, or change your password at any time.'}
-                {tab === 'profile' && 'Manage your credentials, password, and active plan.'}
+                {tab === 'profile' && 'Manage your credentials, role, and profile settings.'}
               </p>
             </div>
           </div>
@@ -218,18 +217,6 @@ export const AuthModal: React.FC = () => {
             }`}
           >
             Sign Up
-          </button>
-
-          <button
-            onClick={() => { setTab('trial'); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
-              tab === 'trial'
-                ? 'bg-[#A8C66C] text-[#800000] shadow-xs'
-                : 'bg-[#F3F8EA] dark:bg-slate-800 text-[#800000] dark:text-lime-400 hover:bg-[#E4F0D3]'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-[#800000] dark:text-lime-400" />
-            <span>7-Day Free Trial</span>
           </button>
 
           <button
@@ -370,22 +357,22 @@ export const AuthModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* 7-Day Trial Callout in Sign In */}
+              {/* Sign Up Callout */}
               <div className="p-3 rounded-xl bg-[#F3F8EA] dark:bg-slate-800/80 border border-[#A8C66C] flex items-center justify-between gap-2">
                 <div>
                   <strong className="text-xs font-bold text-[#800000] dark:text-lime-300 block">
                     Don't have an account yet?
                   </strong>
                   <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                    Get full AI platform access free for 7 days.
+                    Create an account for full AI platform access.
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setTab('trial')}
+                  onClick={() => setTab('signup')}
                   className="px-3 py-1.5 rounded-lg bg-[#800000] text-white text-xs font-extrabold hover:bg-[#600000] transition-all shrink-0 cursor-pointer shadow-xs"
                 >
-                  Start Trial
+                  Sign Up
                 </button>
               </div>
             </form>
@@ -439,7 +426,7 @@ export const AuthModal: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-[11px] font-bold text-[#800000] dark:text-red-400 flex items-center gap-1 cursor-pointer"
                   >
-                    {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 text-[#800000]" />}
                     <span>{showPassword ? 'Hide' : 'Show Password'}</span>
                   </button>
                 </div>
@@ -471,62 +458,12 @@ export const AuthModal: React.FC = () => {
                 </select>
               </div>
 
-              {/* Automatic Plan Selection for Post-Trial Transition */}
-              <div className="space-y-2 pt-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Select Transition Plan (Charged automatically after 7-Day Free Trial)
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div
-                    onClick={() => setSelectedPlan('monthly')}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedPlan === 'monthly'
-                        ? 'border-[#800000] bg-[#F3F8EA] dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <strong className="text-xs font-black">Monthly Plan</strong>
-                      {selectedPlan === 'monthly' && <Check className="w-4 h-4 text-[#800000]" />}
-                    </div>
-                    <div className="text-sm font-black text-[#800000] dark:text-red-400">$15.99 <span className="text-[10px] font-normal text-slate-500">/ mo</span></div>
-                    <span className="text-[10px] text-slate-500 block mt-1">Flexible monthly billing</span>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedPlan('yearly')}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedPlan === 'yearly'
-                        ? 'border-[#800000] bg-[#F3F8EA] dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <strong className="text-xs font-black">Yearly Plan</strong>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#A8C66C] text-[#800000]">Save 18%</span>
-                    </div>
-                    <div className="text-sm font-black text-[#800000] dark:text-red-400">$155.99 <span className="text-[10px] font-normal text-slate-500">/ yr</span></div>
-                    <span className="text-[10px] text-slate-500 block mt-1">$13.00/mo billed annually</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                  <Clock className="w-3.5 h-3.5 text-[#800000]" />
-                  <span>7-Day Free Trial Guarantee:</span>
-                </div>
-                <p>
-                  You will not be billed today. After 7 days, your account will automatically transition to your selected plan (<strong>{selectedPlan === 'monthly' ? '$15.99/mo' : '$155.99/yr'}</strong>). You can cancel or switch plans at any time.
-                </p>
-              </div>
-
               <button
                 type="submit"
                 id="modal-signup-submit-btn"
                 className="w-full py-2.5 rounded-xl bg-[#800000] hover:bg-[#600000] text-white font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Create Account & Start 7-Day Free Trial</span>
+                <span>Create Account</span>
                 <Sparkles className="w-4 h-4 text-[#A8C66C]" />
               </button>
 
@@ -542,127 +479,7 @@ export const AuthModal: React.FC = () => {
             </form>
           )}
 
-          {/* TAB 3: 7-DAY FREE TRIAL DEDICATED PROMO & ACTIVATION */}
-          {tab === 'trial' && (
-            <div className="space-y-4">
-              
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#800000] to-slate-900 text-white space-y-3 shadow-md border border-[#A8C66C]">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#A8C66C] text-[#800000] text-[10px] font-black uppercase tracking-wider">
-                    Zero Risk • Full Access
-                  </span>
-                  <span className="text-xs font-extrabold text-[#A8C66C]">7 Days Free ($0.00)</span>
-                </div>
-                <div>
-                  <h4 className="text-base font-black">Experience Full AI Sales Coaching</h4>
-                  <p className="text-xs text-slate-200 mt-0.5">
-                    Includes Gemini 3.6 Flash multimodal call audio evaluation, MEDDIC scorecard analysis, speech pitch recorder, and automated CRM deal sync.
-                  </p>
-                </div>
-              </div>
-
-              {/* Automatic Transition Selector */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Select Post-Trial Automatic Transition Plan:
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div
-                    onClick={() => setSelectedPlan('monthly')}
-                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedPlan === 'monthly'
-                        ? 'border-[#800000] bg-[#F3F8EA] dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <strong className="text-xs font-bold">Monthly Plan</strong>
-                      {selectedPlan === 'monthly' && <CheckCircle2 className="w-4 h-4 text-[#800000]" />}
-                    </div>
-                    <div className="text-base font-black text-[#800000] dark:text-red-400">$15.99 <span className="text-xs font-normal text-slate-500">/ mo</span></div>
-                    <p className="text-[10px] text-slate-500 mt-1">Automatic transition after Day 7. Cancel anytime.</p>
-                  </div>
-
-                  <div
-                    onClick={() => setSelectedPlan('yearly')}
-                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedPlan === 'yearly'
-                        ? 'border-[#800000] bg-[#F3F8EA] dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <strong className="text-xs font-bold">Yearly Plan</strong>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#A8C66C] text-[#800000]">Save 18%</span>
-                    </div>
-                    <div className="text-base font-black text-[#800000] dark:text-red-400">$155.99 <span className="text-xs font-normal text-slate-500">/ yr</span></div>
-                    <p className="text-[10px] text-slate-500 mt-1">$13.00/mo equivalent billed annually.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* If not logged in, collect name and email */}
-              {!isAuthenticated && (
-                <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Jane Smith"
-                      className="w-full p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="jane.smith@enterprise.ai"
-                      className="w-full p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Choose password..."
-                        className="w-full p-2 pr-9 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-2 text-slate-400"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[#800000]" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Button */}
-              <button
-                type="button"
-                onClick={handleStartTrial}
-                className="w-full py-3 rounded-xl bg-[#800000] hover:bg-[#600000] text-white font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Zap className="w-4 h-4 text-[#A8C66C]" />
-                <span>Activate 7-Day Free Trial (Auto-Transition to {selectedPlan === 'monthly' ? '$15.99/mo' : '$155.99/yr'})</span>
-              </button>
-            </div>
-          )}
-
-          {/* TAB 4: PASSWORD LOOKUP, REVEAL & RESET */}
+          {/* TAB 3: PASSWORD LOOKUP, REVEAL & RESET */}
           {tab === 'reset' && (
             <div className="space-y-4">
               <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 space-y-1">

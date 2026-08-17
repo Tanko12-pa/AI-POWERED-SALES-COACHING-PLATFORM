@@ -7,12 +7,14 @@ interface DownloadReportModalProps {
   coachingData: CoachingSessionResult | null;
   crmOpportunities: CrmOpportunity[];
   onClose: () => void;
+  isDarkMode?: boolean;
 }
 
 export const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   coachingData,
   crmOpportunities,
-  onClose
+  onClose,
+  isDarkMode = false
 }) => {
   const handleExportPdf = () => {
     const doc = new jsPDF();
@@ -110,48 +112,61 @@ export const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 no-print animate-in fade-in duration-200">
+      <div className={`rounded-xl border shadow-2xl max-w-2xl w-full p-6 transition-colors duration-300 ${
+        isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+      }`}>
+        <div className={`flex items-center justify-between pb-3 border-b mb-4 ${
+          isDarkMode ? 'border-slate-800' : 'border-slate-200'
+        }`}>
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#800000]" />
-            <h3 className="text-lg font-bold text-[#800000]">Formatted Executive Report Snapshot</h3>
+            <FileText className="w-5 h-5 text-[#800000] dark:text-red-400" />
+            <h3 className="text-lg font-bold text-[#800000] dark:text-red-400">Formatted Executive Report Snapshot</h3>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Report Preview */}
-        <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg text-xs space-y-4 max-h-96 overflow-y-auto">
-          <div className="border-b border-slate-200 pb-2 flex justify-between items-center">
-            <span className="font-extrabold text-[#800000] text-sm">
+        <div className={`p-5 rounded-lg text-xs space-y-4 max-h-96 overflow-y-auto border transition-colors ${
+          isDarkMode ? 'bg-slate-800/80 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+        }`}>
+          <div className={`border-b pb-2 flex justify-between items-center ${
+            isDarkMode ? 'border-slate-700' : 'border-slate-200'
+          }`}>
+            <span className="font-extrabold text-[#800000] dark:text-red-400 text-sm">
               AI-Powered Sales Coaching Platform
             </span>
-            <span className="text-slate-500 font-mono text-[11px]">{new Date().toLocaleDateString()}</span>
+            <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{new Date().toLocaleDateString()}</span>
           </div>
 
           <div>
-            <h4 className="font-bold text-slate-800 mb-1">Executive Coaching Summary:</h4>
-            <p className="text-slate-700 leading-relaxed font-medium">
+            <h4 className={`font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Executive Coaching Summary:</h4>
+            <p className={`leading-relaxed font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
               {coachingData?.summary || "Activity logs and CRM records analyzed. You have 3 high-priority proposal follow-ups today."}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded border border-slate-200">
+          <div className={`grid grid-cols-2 gap-3 p-3 rounded border transition-colors ${
+            isDarkMode ? 'bg-slate-900/90 border-slate-700' : 'bg-white border-slate-200'
+          }`}>
             <div>
-              <span className="text-slate-500 font-semibold">Pipeline Health:</span>
-              <div className="text-base font-extrabold text-[#800000]">{coachingData?.pipeline_health_score || 88} / 100</div>
+              <span className={`font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Pipeline Health:</span>
+              <div className="text-base font-extrabold text-[#800000] dark:text-red-400">{coachingData?.pipeline_health_score || 88} / 100</div>
             </div>
             <div>
-              <span className="text-slate-500 font-semibold">Time Management:</span>
-              <div className="text-base font-extrabold text-slate-900">{coachingData?.time_management_score || 84} / 100</div>
+              <span className={`font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Time Management:</span>
+              <div className={`text-base font-extrabold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{coachingData?.time_management_score || 84} / 100</div>
             </div>
           </div>
 
           <div>
-            <h4 className="font-bold text-slate-800 mb-1">Priority Action Plan:</h4>
-            <ul className="list-disc pl-4 space-y-1 text-slate-700">
+            <h4 className={`font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Priority Action Plan:</h4>
+            <ul className={`list-disc pl-4 space-y-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
               {(coachingData?.priority_actions || ["Follow up with ACME Corp regarding pricing proposal"]).map((a, i) => (
                 <li key={i}>{a}</li>
               ))}
@@ -159,10 +174,14 @@ export const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+        <div className={`mt-5 flex items-center justify-end gap-3 pt-3 border-t ${
+          isDarkMode ? 'border-slate-800' : 'border-slate-200'
+        }`}>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
           >
             <Printer className="w-4 h-4" />
             <span>Print Report</span>

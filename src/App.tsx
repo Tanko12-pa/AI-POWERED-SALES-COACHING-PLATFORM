@@ -21,9 +21,9 @@ import { BadgesModal } from './components/BadgesModal';
 import { VoicePitchRecorderModal } from './components/VoicePitchRecorderModal';
 import { AuthSubscriptionProvider } from './context/AuthSubscriptionContext';
 import { AuthModal } from './components/AuthModal';
+import { SubscriptionBillingSection } from './components/SubscriptionBillingSection';
 import { SubscriptionPlansModal } from './components/SubscriptionPlansModal';
-import { ManageSubscriptionPortal } from './components/ManageSubscriptionPortal';
-import { LayoutDashboard, Receipt, Sparkles as SparklesIcon, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Sparkles as SparklesIcon, ShieldCheck } from 'lucide-react';
 
 import {
   initialCrmOpportunities,
@@ -147,7 +147,6 @@ export default function App() {
 function AppInner() {
   // Navigation & Role State
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [dashboardSubView, setDashboardSubView] = useState<'coaching' | 'subscription'>('coaching');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [userRole, setUserRole] = useState<UserRole>('Admin');
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -587,7 +586,7 @@ function AppInner() {
   );
 
   return (
-    <div className={`min-h-screen font-sans flex flex-col transition-colors duration-200 ${
+    <div className={`min-h-screen font-sans flex flex-col transition-all duration-500 ease-in-out ${
       isDarkMode ? 'bg-slate-950 text-slate-100 dark' : 'bg-[#F8FAF6] text-slate-900'
     }`}>
       {/* Top Navigation Header */}
@@ -607,7 +606,7 @@ function AppInner() {
       />
 
       {/* Main Screen Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 transition-all duration-500 ease-in-out">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
           {/* Left Column: Insight Canvas */}
@@ -616,74 +615,32 @@ function AppInner() {
             <MetricCards
               coachingData={coachingData}
               onDownloadPdf={() => setShowPdfModal(true)}
+              isDarkMode={isDarkMode}
             />
 
             {/* Tab Views */}
             {activeTab === 'dashboard' && (
-              <div className="space-y-4">
-                {/* Dashboard Sub-View Switcher Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      id="dashboard-coaching-subtab-btn"
-                      onClick={() => setDashboardSubView('coaching')}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        dashboardSubView === 'coaching'
-                          ? 'bg-[#800000] text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                      <span>Sales Coaching & Pipeline Feed</span>
-                    </button>
+              <SalesCoachingFeed
+                coachingData={coachingData}
+                crmOpportunities={filteredOpportunities}
+                calendarEvents={calendarEvents}
+                playbooks={playbooks}
+                badges={badges}
+                proposedPrepSlots={proposedPrepSlots}
+                onAddOpportunity={handleAddOpportunity}
+                onDeleteOpportunity={handleDeleteOpportunity}
+                onRunCoachingSession={handleRunCoachingSession}
+                onOpenBadgesModal={() => setShowBadgesModal(true)}
+                onProposePrepSlots={handleProposePrepSlots}
+                onAcceptPrepSlot={handleAcceptPrepSlot}
+                onDismissPrepSlot={handleDismissPrepSlot}
+                onOpenPitchModal={() => setShowPitchModal(true)}
+                isDarkMode={isDarkMode}
+              />
+            )}
 
-                    <button
-                      id="dashboard-subscription-subtab-btn"
-                      onClick={() => setDashboardSubView('subscription')}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        dashboardSubView === 'subscription'
-                          ? 'bg-[#800000] text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <Receipt className="w-3.5 h-3.5 text-[#A8C66C]" />
-                      <span>Manage Subscription Portal</span>
-                      <span className="px-1.5 py-0.2 rounded-full bg-[#A8C66C] text-[#800000] text-[9px] font-black uppercase">
-                        Live Sync
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="hidden sm:flex items-center gap-2 px-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Backend Real-Time Active</span>
-                  </div>
-                </div>
-
-                {dashboardSubView === 'coaching' ? (
-                  <SalesCoachingFeed
-                    coachingData={coachingData}
-                    crmOpportunities={filteredOpportunities}
-                    calendarEvents={calendarEvents}
-                    playbooks={playbooks}
-                    badges={badges}
-                    proposedPrepSlots={proposedPrepSlots}
-                    onAddOpportunity={handleAddOpportunity}
-                    onDeleteOpportunity={handleDeleteOpportunity}
-                    onRunCoachingSession={handleRunCoachingSession}
-                    onOpenBadgesModal={() => setShowBadgesModal(true)}
-                    onProposePrepSlots={handleProposePrepSlots}
-                    onAcceptPrepSlot={handleAcceptPrepSlot}
-                    onDismissPrepSlot={handleDismissPrepSlot}
-                    onOpenPitchModal={() => setShowPitchModal(true)}
-                    isDarkMode={isDarkMode}
-                  />
-                ) : (
-                  <ManageSubscriptionPortal
-                    isDarkMode={isDarkMode}
-                  />
-                )}
-              </div>
+            {activeTab === 'billing' && (
+              <SubscriptionBillingSection isDarkMode={isDarkMode} />
             )}
 
             {activeTab === 'software' && (
@@ -771,6 +728,7 @@ function AppInner() {
           coachingData={coachingData}
           crmOpportunities={crmOpportunities}
           onClose={() => setShowPdfModal(false)}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -780,6 +738,7 @@ function AppInner() {
           onSendMessage={handleSendChatMessage}
           onClose={() => setShowChatbot(false)}
           isLoading={chatLoading}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -789,26 +748,33 @@ function AppInner() {
           onMarkRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
           onClearAll={() => setNotifications([])}
           onClose={() => setShowNotifications(false)}
+          isDarkMode={isDarkMode}
         />
       )}
 
       {showBadgesModal && (
         <BadgesModal
+          isOpen={showBadgesModal}
           badges={badges}
+          userRole={userRole}
+          isDarkMode={isDarkMode}
           onClose={() => setShowBadgesModal(false)}
         />
       )}
 
       {showPitchModal && (
         <VoicePitchRecorderModal
+          isOpen={showPitchModal}
+          playbooks={playbooks}
           onClose={() => setShowPitchModal(false)}
           onPitchAnalyzed={handlePitchCompleted}
+          isDarkMode={isDarkMode}
         />
       )}
 
-      {/* Auth & Subscription Modals */}
+      {/* Authentication and Subscription Modals */}
       <AuthModal />
-      <SubscriptionPlansModal />
+      <SubscriptionPlansModal isDarkMode={isDarkMode} />
     </div>
   );
 }
