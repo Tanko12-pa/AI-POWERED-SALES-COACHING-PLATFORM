@@ -22,7 +22,11 @@ import {
   Check,
   Sliders,
   ChevronRight,
-  Shield
+  Shield,
+  Copy,
+  Info,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { useAuthSubscription } from '../context/AuthSubscriptionContext';
 import { SubscriptionPlanType, UserRole } from '../types';
@@ -65,13 +69,15 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
     subscribeWithPayPal,
     startSevenDayFreeTrial,
     cancelSubscription,
+    simulateTrial48HoursRemaining,
+    simulateTrialExpiration,
     registeredUsers,
     handlePayPalWebhookEvent,
     triggerPayPalWebhookSimulation
   } = useAuthSubscription();
 
   // Active sub-tab in billing section
-  const [activeSubTab, setActiveSubTab] = useState<'plans' | 'auth' | 'history' | 'gateway_config'>('plans');
+  const [activeSubTab, setActiveSubTab] = useState<'plans' | 'auth' | 'history' | 'gateway_config' | 'policy'>('plans');
 
   // Interactive inline auth form state
   const [authMode, setAuthMode] = useState<'signup' | 'signin' | 'changepassword'>('signup');
@@ -86,6 +92,7 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
   const [lookupEmail, setLookupEmail] = useState('');
   const [newPasswordVal, setNewPasswordVal] = useState('');
   const [revealedPass, setRevealedPass] = useState<string | null>(null);
+  const [copiedPolicy, setCopiedPolicy] = useState(false);
 
   // Billing & PayPal State
   const [selectedBillingCycle, setSelectedBillingCycle] = useState<SubscriptionPlanType>('monthly');
@@ -467,6 +474,17 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
               Billing Plans
             </button>
             <button
+              onClick={() => setActiveSubTab('policy')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeSubTab === 'policy'
+                  ? 'bg-[#800000] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[#A8C66C]" />
+              <span>Free Trial Policy</span>
+            </button>
+            <button
               onClick={() => setActiveSubTab('auth')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeSubTab === 'auth'
@@ -749,12 +767,54 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
                 Reset 7-Day Free Trial (Yearly Transition)
               </button>
               <button
+                id="btn-simulate-48h-warning"
+                onClick={simulateTrial48HoursRemaining}
+                className="px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-xs font-bold text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 transition-all cursor-pointer flex items-center gap-1"
+                title="Simulate Free Trial with < 48 Hours Remaining (36h Left) to test in-app expiration warning banner"
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Simulate &lt; 48h Trial Warning (36h Left)</span>
+              </button>
+              <button
+                id="btn-simulate-trial-expired"
+                onClick={simulateTrialExpiration}
+                className="px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900/60 text-xs font-bold text-red-900 dark:text-red-200 border border-red-300 dark:border-red-800 transition-all cursor-pointer"
+                title="Simulate 168-Hour Expiration"
+              >
+                Simulate Trial Expiration
+              </button>
+              <button
                 onClick={cancelSubscription}
                 className="px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-xs font-bold text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 transition-all cursor-pointer ml-auto"
               >
                 Cancel Subscription Renewal
               </button>
             </div>
+          </div>
+
+          {/* Quick Access to Full Policy Card */}
+          <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500 text-white shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div className="text-xs">
+                <strong className="text-amber-900 dark:text-amber-200 font-bold block">
+                  Official Subscription & Free Trial Policy (CAD)
+                </strong>
+                <p className="text-slate-600 dark:text-slate-400 text-[11px] mt-0.5">
+                  Includes full details on 7-Day (168-hour) trial duration, $0 upfront fee, automatic hour-168 suspension, and PayPal automated webhooks.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('policy')}
+              className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold flex items-center gap-1.5 shrink-0 shadow-xs transition-all cursor-pointer"
+            >
+              <span>View Full Policy</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
         </div>
@@ -1591,6 +1651,315 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
                 </div>
                 <div className="text-[11px] text-slate-300 font-mono">Lifecycle Cancellation</div>
                 <div className="text-[10px] text-slate-400 mt-1">Sets autoRenew to false</div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB 5: OFFICIAL SUBSCRIPTION AND FREE TRIAL POLICY */}
+      {activeSubTab === 'policy' && (
+        <div className={`p-6 rounded-2xl border ${
+          isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        } shadow-sm space-y-6 animate-in fade-in duration-200`}>
+          
+          {/* Policy Document Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-start gap-3">
+              <div className="p-3 rounded-xl bg-[#800000] text-[#A8C66C] shadow-sm shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  Official Terms & Contract Rules
+                </span>
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                  Subscription and Free Trial Policy
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Standard terms of service, trial duration, automated expiration enforcement, and PayPal billing cycles.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Actions: Copy & Download */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const policyText = `Subscription and Free Trial Policy\n\nApplication Name: AI-POWERED SALES COACHING PLATFORM\nPayment Gateway Provider: PayPal REST API Integration\nSupported Currency: CAD (Canadian Dollar)\n\n1. User Onboarding & 7-Day Free Trial Policy\n• Direct Sign Up Workflow: The AI-POWERED SALES COACHING PLATFORM shall direct every new user to Sign Up with their name, email, and password before accessing any platform services.\n• Trial Activation: Upon completing account Sign Up, every user is automatically enabled with a 7-Day Free Trial (168 consecutive hours) starting at the exact timestamp of registration.\n• Full Feature Access: The 7-Day Free Trial grants unrestricted access to all application features and services, including: Full AI Scorecard Analyzer, Multimodal Call Audio Transcription, Real-Time Speech Practice Pitch Lab, and Automated MEDDIC & Talk-to-Listen Breakdowns.\n• Zero Upfront Cost: Registration and trial activation require $0.00 CAD upfront.\n\n2. Account Authentication & Security\n• Sign In Access: Registered users can Sign In securely using their email and password credentials at any time.\n• Password Management: Users have full self-service control to change or update their account password at any time directly through their profile settings or authentication interface.\n\n3. Trial Expiration & Access Suspension\n• Automatic Expiration Tracking: The system continuously tracks and manages the 7-day free trial period in real time. Upon reaching hour 168, the account status automatically transitions to TRIAL_EXPIRED.\n• Access Restriction: Upon expiration of the 7-day trial period, the system automatically restricts further access to all premium coaching tools, dashboards, and AI services.\n• Immediate Redirection: Users are immediately redirected to the Subscription & Billing Page upon trial expiration or during any subsequent login attempt.\n• Suspension Protocol: Access to the application shall remain suspended until a valid subscription payment has been successfully processed.\n\n4. Subscription Plans & Pricing\nTo regain or maintain uninterrupted access, users are required to select and complete payment for one of the available subscription plans via the integrated PayPal payment gateway:\n• Monthly Subscription Plan: Billing Cycle: Monthly recurring billing | Price: $15.99 CAD / month | Flexibility: Cancel or modify plan settings at any time via user account settings or PayPal dashboard.\n• Annual (Yearly) Subscription Plan (Best Value – Save 18%): Billing Cycle: Annual recurring billing | Price: $155.99 CAD / year (Equivalent to $13.00 CAD/month, saving $35.89 CAD/year) | Perks: Priority Gemini processing queue and advanced team coaching benchmark analytics.\n• Access Restoration: Once payment is confirmed, the user will immediately regain access to all authorized features based on the selected subscription plan.\n\n5. Core System Automated Functions\nThe backend system and PayPal Webhook integration automatically execute the following functions:\n• Trial Management: Automatically track and manage the free trial period runtime based on registration timestamps.\n• Advance Expiration Notifications: Display advance notifications starting 48 hours prior to trial expiration (Day 5) to remind users to select a plan.\n• Automated Redirection: Redirect users to the subscription payment page immediately upon trial expiration.\n• Access Prevention: Prevent access to premium features until an active subscription is purchased and confirmed.\n• Instant Access Provisioning: Instantly restore user platform access within seconds of receiving a successful PayPal BILLING.SUBSCRIPTION.ACTIVATED or PAYMENT.SALE.COMPLETED webhook notification.\n• Automated Renewal Processing: Automatically renew access according to the user's selected monthly or annual billing cycle, subject to successful payment processing.\n• Failure Protocol: If a payment fails (BILLING.SUBSCRIPTION.PAYMENT.FAILED), mark the account as PAST_DUE, suspend platform access, and notify the user to update payment details in PayPal.`;
+                  navigator.clipboard.writeText(policyText);
+                  setCopiedPolicy(true);
+                  setTimeout(() => setCopiedPolicy(false), 2500);
+                }}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copiedPolicy ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                <span>{copiedPolicy ? 'Copied to Clipboard' : 'Copy Text'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const policyText = `Subscription and Free Trial Policy\n\nApplication Name: AI-POWERED SALES COACHING PLATFORM\nPayment Gateway Provider: PayPal REST API Integration\nSupported Currency: CAD (Canadian Dollar)\n\n1. User Onboarding & 7-Day Free Trial Policy\n• Direct Sign Up Workflow: The AI-POWERED SALES COACHING PLATFORM shall direct every new user to Sign Up with their name, email, and password before accessing any platform services.\n• Trial Activation: Upon completing account Sign Up, every user is automatically enabled with a 7-Day Free Trial (168 consecutive hours) starting at the exact timestamp of registration.\n• Full Feature Access: The 7-Day Free Trial grants unrestricted access to all application features and services, including: Full AI Scorecard Analyzer, Multimodal Call Audio Transcription, Real-Time Speech Practice Pitch Lab, and Automated MEDDIC & Talk-to-Listen Breakdowns.\n• Zero Upfront Cost: Registration and trial activation require $0.00 CAD upfront.\n\n2. Account Authentication & Security\n• Sign In Access: Registered users can Sign In securely using their email and password credentials at any time.\n• Password Management: Users have full self-service control to change or update their account password at any time directly through their profile settings or authentication interface.\n\n3. Trial Expiration & Access Suspension\n• Automatic Expiration Tracking: The system continuously tracks and manages the 7-day free trial period in real time. Upon reaching hour 168, the account status automatically transitions to TRIAL_EXPIRED.\n• Access Restriction: Upon expiration of the 7-day trial period, the system automatically restricts further access to all premium coaching tools, dashboards, and AI services.\n• Immediate Redirection: Users are immediately redirected to the Subscription & Billing Page upon trial expiration or during any subsequent login attempt.\n• Suspension Protocol: Access to the application shall remain suspended until a valid subscription payment has been successfully processed.\n\n4. Subscription Plans & Pricing\nTo regain or maintain uninterrupted access, users are required to select and complete payment for one of the available subscription plans via the integrated PayPal payment gateway:\n• Monthly Subscription Plan: Billing Cycle: Monthly recurring billing | Price: $15.99 CAD / month | Flexibility: Cancel or modify plan settings at any time via user account settings or PayPal dashboard.\n• Annual (Yearly) Subscription Plan (Best Value – Save 18%): Billing Cycle: Annual recurring billing | Price: $155.99 CAD / year (Equivalent to $13.00 CAD/month, saving $35.89 CAD/year) | Perks: Priority Gemini processing queue and advanced team coaching benchmark analytics.\n• Access Restoration: Once payment is confirmed, the user will immediately regain access to all authorized features based on the selected subscription plan.\n\n5. Core System Automated Functions\nThe backend system and PayPal Webhook integration automatically execute the following functions:\n• Trial Management: Automatically track and manage the free trial period runtime based on registration timestamps.\n• Advance Expiration Notifications: Display advance notifications starting 48 hours prior to trial expiration (Day 5) to remind users to select a plan.\n• Automated Redirection: Redirect users to the subscription payment page immediately upon trial expiration.\n• Access Prevention: Prevent access to premium features until an active subscription is purchased and confirmed.\n• Instant Access Provisioning: Instantly restore user platform access within seconds of receiving a successful PayPal BILLING.SUBSCRIPTION.ACTIVATED or PAYMENT.SALE.COMPLETED webhook notification.\n• Automated Renewal Processing: Automatically renew access according to the user's selected monthly or annual billing cycle, subject to successful payment processing.\n• Failure Protocol: If a payment fails (BILLING.SUBSCRIPTION.PAYMENT.FAILED), mark the account as PAST_DUE, suspend platform access, and notify the user to update payment details in PayPal.`;
+                  const blob = new Blob([policyText], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'AI_Sales_Coaching_Subscription_Policy.txt';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#800000] text-white text-xs font-bold hover:bg-[#600000] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Policy (.txt)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Key System Attributes Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Application Name
+              </span>
+              <p className="text-xs font-black text-slate-900 dark:text-slate-100">
+                AI-POWERED SALES COACHING PLATFORM
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Payment Gateway Provider
+              </span>
+              <p className="text-xs font-black text-[#800000] dark:text-red-400">
+                PayPal REST API Integration
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                Supported Currency
+              </span>
+              <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">
+                CAD (Canadian Dollar)
+              </p>
+            </div>
+          </div>
+
+          {/* 5 Policy Sections */}
+          <div className="space-y-4">
+            
+            {/* Section 1 */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#800000] text-white text-xs font-black flex items-center justify-center">
+                  1
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  User Onboarding & 7-Day Free Trial Policy
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8 text-xs text-slate-700 dark:text-slate-300">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Direct Sign Up Workflow
+                  </strong>
+                  The AI-POWERED SALES COACHING PLATFORM shall direct every new user to Sign Up with their name, email, and password before accessing any platform services.
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Trial Activation (168 Hours)
+                  </strong>
+                  Upon completing account Sign Up, every user is automatically enabled with a 7-Day Free Trial (168 consecutive hours) starting at the exact timestamp of registration.
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 md:col-span-2">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Full Feature Access & Zero Upfront Cost ($0.00 CAD)
+                  </strong>
+                  The 7-Day Free Trial grants unrestricted access to all application features: Full AI Scorecard Analyzer, Multimodal Call Audio Transcription, Real-Time Speech Practice Pitch Lab, and Automated MEDDIC & Talk-to-Listen Breakdowns. Registration and trial activation require $0.00 CAD upfront.
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2 */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#800000] text-white text-xs font-black flex items-center justify-center">
+                  2
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  Account Authentication & Security
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8 text-xs text-slate-700 dark:text-slate-300">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Sign In Access
+                  </strong>
+                  Registered users can Sign In securely using their email and password credentials at any time.
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Password Management
+                  </strong>
+                  Users have full self-service control to change or update their account password at any time directly through their profile settings or authentication interface.
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3 */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#800000] text-white text-xs font-black flex items-center justify-center">
+                  3
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  Trial Expiration & Access Suspension
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8 text-xs text-slate-700 dark:text-slate-300">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Automatic Expiration Tracking
+                  </strong>
+                  The system continuously tracks and manages the 7-day free trial period in real time. Upon reaching hour 168, the account status automatically transitions to <code className="font-mono text-amber-600 dark:text-amber-400">TRIAL_EXPIRED</code>.
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Access Restriction & Redirection
+                  </strong>
+                  Upon expiration, the system restricts access to all premium coaching tools and immediately redirects the user to the Subscription & Billing Page.
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 md:col-span-2">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold mb-0.5">
+                    Suspension Protocol
+                  </strong>
+                  Access to the application shall remain suspended until a valid subscription payment has been successfully processed via PayPal.
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4 */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#800000] text-white text-xs font-black flex items-center justify-center">
+                  4
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  Subscription Plans & Pricing
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8 text-xs text-slate-700 dark:text-slate-300">
+                <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <strong className="text-slate-900 dark:text-slate-100 font-bold">Monthly Pro Plan</strong>
+                    <span className="px-2 py-0.5 rounded font-black bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-[10px]">
+                      $15.99 CAD / mo
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Monthly recurring billing. Flexibility to cancel or modify plan settings anytime via account settings or PayPal dashboard.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border-2 border-[#A8C66C] dark:border-lime-500/50 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <strong className="text-slate-900 dark:text-slate-100 font-bold">Annual (Yearly) Pro Plan</strong>
+                    <span className="px-2 py-0.5 rounded font-black bg-[#800000] text-white text-[10px]">
+                      $155.99 CAD / yr (Save 18%)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Annual recurring billing ($13.00 CAD/month, saving $35.89 CAD/year). Includes Priority Gemini processing queue and advanced team coaching benchmark analytics.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5 */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#800000] text-white text-xs font-black flex items-center justify-center">
+                  5
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  Core System Automated Functions
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pl-8 text-xs">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    1. Trial Management
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Automatic real-time tracking based on account registration timestamps.
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    2. Advance Expiration Alerts
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    48-hour advance notification banners prior to trial expiration (Day 5).
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    3. Automated Redirection
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Redirects users to the subscription payment page immediately upon expiration.
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    4. Instant Access Provisioning
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Instant unlock upon PayPal <code className="font-mono text-[10px]">BILLING.SUBSCRIPTION.ACTIVATED</code> webhook.
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    5. Automated Renewal
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Seamless cycle renewal according to monthly or annual billing plan.
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <strong className="block text-slate-900 dark:text-slate-100 font-bold text-[11px] mb-0.5">
+                    6. Failure Protocol
+                  </strong>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Flags <code className="font-mono text-[10px] text-red-500">PAST_DUE</code>, suspends platform access, and requests payment update.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Quick CTA to return to Billing Plans or Sign In */}
+          <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              Ready to select a plan or configure your account credentials?
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('auth')}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-all cursor-pointer"
+              >
+                Sign Up / Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('plans')}
+                className="px-4 py-1.5 rounded-lg text-xs font-extrabold bg-[#800000] text-white hover:bg-[#600000] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <span>Select Subscription Plan</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

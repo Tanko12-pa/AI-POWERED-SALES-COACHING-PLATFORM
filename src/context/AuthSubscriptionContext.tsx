@@ -87,6 +87,7 @@ interface AuthSubscriptionContextType {
   changeTransitionPlan: (plan: SubscriptionPlanType) => void;
   simulateTrialExpiration: () => void;
   simulateResetTrial: () => void;
+  simulateTrial48HoursRemaining: () => void;
 
   // Status & Webhook Handlers
   updateSubscriptionStatus: (
@@ -114,19 +115,21 @@ const STORAGE_USERS_DB_KEY = 'ai_sales_coaching_users_db_v2';
 // Pre-seeded default users with fully active, unrestricted access
 const createDefaultSubscription = (status: SubscriptionStatus = 'active_yearly', plan: SubscriptionPlanType = 'yearly'): SubscriptionState => {
   const now = new Date();
-  const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const nextDate = new Date(now.getTime() + 335 * 24 * 60 * 60 * 1000);
+  const isTrial = status === 'trialing';
+  const startDate = isTrial ? now : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const trialEnd = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // exactly 168 hours
+  const nextDate = isTrial ? trialEnd : new Date(now.getTime() + 335 * 24 * 60 * 60 * 1000);
 
   return {
-    status: 'active_yearly',
-    selectedPlan: 'yearly',
+    status: status,
+    selectedPlan: plan,
     monthlyPrice: 15.99,
     yearlyPrice: 155.99,
     trialStartDate: startDate.toISOString(),
-    trialEndDate: startDate.toISOString(),
-    trialDaysRemaining: 0,
-    autoTransitionToPlan: false,
-    transitionExecuted: true,
+    trialEndDate: trialEnd.toISOString(),
+    trialDaysRemaining: isTrial ? 7 : 0,
+    autoTransitionToPlan: isTrial,
+    transitionExecuted: !isTrial,
     paymentMethod: {
       cardBrand: 'Visa',
       last4: '4242',
@@ -692,7 +695,31 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
     };
     setCurrentUser(updated);
     setRegisteredUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
-    setTrialNotification('🔄 Trial reset to full 7-day period (7 days remaining).');
+    setTrialNotification('🔄 Trial reset to full 7-day period (7 days / 168 hours remaining).');
+  };
+
+  // Simulate < 48 Hours Remaining on Free Trial (36 hours remaining)
+  const simulateTrial48HoursRemaining = () => {
+    if (!currentUser) return;
+    const now = Date.now();
+    const futureEndDate = new Date(now + 36 * 60 * 60 * 1000); // 36 hours remaining (< 48h)
+    const startDate = new Date(futureEndDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const updatedUser: UserAccount = {
+      ...currentUser,
+      subscription: {
+        ...currentUser.subscription,
+        status: 'trialing',
+        trialStartDate: startDate.toISOString(),
+        trialEndDate: futureEndDate.toISOString(),
+        trialDaysRemaining: 2,
+        transitionExecuted: false
+      }
+    };
+
+    setCurrentUser(updatedUser);
+    setRegisteredUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+    setTrialNotification('⚠️ Simulated Free Trial State: Less than 48 hours remaining (36h left). In-app warning banner triggered!');
   };
 
   // Clear Cookies and Storage Cache
@@ -1190,6 +1217,7 @@ export const AuthSubscriptionProvider: React.FC<{ children: React.ReactNode }> =
         changeTransitionPlan,
         simulateTrialExpiration,
         simulateResetTrial,
+        simulateTrial48HoursRemaining,
         updateSubscriptionStatus,
         handlePayPalWebhookEvent,
         triggerPayPalWebhookSimulation

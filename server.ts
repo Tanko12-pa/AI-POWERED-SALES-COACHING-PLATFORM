@@ -2088,18 +2088,157 @@ app.get("/api/paypal/config", (req, res) => {
 
   res.json({
     success: true,
-    clientId: clientId ? `${clientId.slice(0, 8)}...${clientId.slice(-6)}` : "",
-    fullClientId: clientId,
-    hasWebhookConfigured: !!webhookId,
+    clientId: clientId ? `${clientId.substring(0, 10)}...` : undefined,
+    webhookId: webhookId ? `${webhookId.substring(0, 8)}...` : undefined,
+    environment: isSandbox ? "sandbox" : "production",
     apiUrl,
-    isSandbox,
     currency,
     planIds,
     plans: {
-      monthly: { price: 15.99, name: `Monthly Pro Subscription (${currency})`, planId: planIds.monthly },
-      yearly: { price: 155.99, name: `Yearly Pro Subscription (${currency} - 18% Savings)`, planId: planIds.yearly },
-      trial: { price: 0.00, name: `7-Day Free Trial (${currency})`, planId: planIds.trial }
+      monthly: {
+        price: 15.99,
+        currency,
+        planId: planIds.monthly,
+        trialDays: 7,
+        trialPrice: 0.00
+      },
+      yearly: {
+        price: 155.99,
+        currency,
+        planId: planIds.yearly,
+        trialDays: 7,
+        trialPrice: 0.00,
+        monthlyEquivalent: 13.00,
+        annualSavings: 35.89,
+        discountPercentage: 18
+      }
     }
+  });
+});
+
+/**
+ * Endpoint: GET /api/policy/subscription-free-trial
+ * Returns the official Subscription and Free Trial Policy for AI-POWERED SALES COACHING PLATFORM.
+ */
+app.get("/api/policy/subscription-free-trial", (req, res) => {
+  res.json({
+    success: true,
+    policyName: "Subscription and Free Trial Policy",
+    applicationName: "AI-POWERED SALES COACHING PLATFORM",
+    paymentGatewayProvider: "PayPal REST API Integration",
+    supportedCurrency: "CAD (Canadian Dollar)",
+    sections: [
+      {
+        number: 1,
+        title: "User Onboarding & 7-Day Free Trial Policy",
+        items: [
+          {
+            heading: "Direct Sign Up Workflow",
+            detail: "The AI-POWERED SALES COACHING PLATFORM shall direct every new user to Sign Up with their name, email, and password before accessing any platform services."
+          },
+          {
+            heading: "Trial Activation",
+            detail: "Upon completing account Sign Up, every user is automatically enabled with a 7-Day Free Trial (168 consecutive hours) starting at the exact timestamp of registration."
+          },
+          {
+            heading: "Full Feature Access",
+            detail: "The 7-Day Free Trial grants unrestricted access to all application features and services, including: Full AI Scorecard Analyzer, Multimodal Call Audio Transcription, Real-Time Speech Practice Pitch Lab, and Automated MEDDIC & Talk-to-Listen Breakdowns."
+          },
+          {
+            heading: "Zero Upfront Cost",
+            detail: "Registration and trial activation require $0.00 CAD upfront."
+          }
+        ]
+      },
+      {
+        number: 2,
+        title: "Account Authentication & Security",
+        items: [
+          {
+            heading: "Sign In Access",
+            detail: "Registered users can Sign In securely using their email and password credentials at any time."
+          },
+          {
+            heading: "Password Management",
+            detail: "Users have full self-service control to change or update their account password at any time directly through their profile settings or authentication interface."
+          }
+        ]
+      },
+      {
+        number: 3,
+        title: "Trial Expiration & Access Suspension",
+        items: [
+          {
+            heading: "Automatic Expiration Tracking",
+            detail: "The system continuously tracks and manages the 7-day free trial period in real time. Upon reaching hour 168, the account status automatically transitions to TRIAL_EXPIRED."
+          },
+          {
+            heading: "Access Restriction",
+            detail: "Upon expiration of the 7-day trial period, the system automatically restricts further access to all premium coaching tools, dashboards, and AI services."
+          },
+          {
+            heading: "Immediate Redirection",
+            detail: "Users are immediately redirected to the Subscription & Billing Page upon trial expiration or during any subsequent login attempt."
+          },
+          {
+            heading: "Suspension Protocol",
+            detail: "Access to the application shall remain suspended until a valid subscription payment has been successfully processed."
+          }
+        ]
+      },
+      {
+        number: 4,
+        title: "Subscription Plans & Pricing",
+        items: [
+          {
+            heading: "Monthly Subscription Plan",
+            detail: "Billing Cycle: Monthly recurring billing | Price: $15.99 CAD / month | Flexibility: Cancel or modify plan settings at any time via user account settings or PayPal dashboard."
+          },
+          {
+            heading: "Annual (Yearly) Subscription Plan (Best Value – Save 18%)",
+            detail: "Billing Cycle: Annual recurring billing | Price: $155.99 CAD / year (Equivalent to $13.00 CAD/month, saving $35.89 CAD/year) | Perks: Priority Gemini processing queue and advanced team coaching benchmark analytics."
+          },
+          {
+            heading: "Access Restoration",
+            detail: "Once payment is confirmed, the user will immediately regain access to all authorized features based on the selected subscription plan."
+          }
+        ]
+      },
+      {
+        number: 5,
+        title: "Core System Automated Functions",
+        items: [
+          {
+            heading: "Trial Management",
+            detail: "Automatically track and manage the free trial period runtime based on registration timestamps."
+          },
+          {
+            heading: "Advance Expiration Notifications",
+            detail: "Display advance notifications starting 48 hours prior to trial expiration (Day 5) to remind users to select a plan."
+          },
+          {
+            heading: "Automated Redirection",
+            detail: "Redirect users to the subscription payment page immediately upon trial expiration."
+          },
+          {
+            heading: "Access Prevention",
+            detail: "Prevent access to premium features until an active subscription is purchased and confirmed."
+          },
+          {
+            heading: "Instant Access Provisioning",
+            detail: "Instantly restore user platform access within seconds of receiving a successful PayPal BILLING.SUBSCRIPTION.ACTIVATED or PAYMENT.SALE.COMPLETED webhook notification."
+          },
+          {
+            heading: "Automated Renewal Processing",
+            detail: "Automatically renew access according to the user's selected monthly or annual billing cycle, subject to successful payment processing."
+          },
+          {
+            heading: "Failure Protocol",
+            detail: "If a payment fails (BILLING.SUBSCRIPTION.PAYMENT.FAILED), mark the account as PAST_DUE, suspend platform access, and notify the user to update payment details in PayPal."
+          }
+        ]
+      }
+    ]
   });
 });
 

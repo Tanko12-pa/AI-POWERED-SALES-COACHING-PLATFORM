@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAuthSubscription } from '../context/AuthSubscriptionContext';
+import { TrialCounter } from './TrialCounter';
 
 interface HeaderProps {
   activeTab: string;
@@ -371,6 +372,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         </div>
       </div>
+
+      {/* 7-Day Free Trial Countdown Banner */}
+      <TrialCounter setActiveTab={setActiveTab} isDarkMode={isDarkMode} />
 
       {/* Primary Nav Links */}
       <div className={`border-t ${isDarkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
