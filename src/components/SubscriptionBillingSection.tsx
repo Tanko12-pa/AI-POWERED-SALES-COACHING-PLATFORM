@@ -1245,7 +1245,9 @@ export const SubscriptionBillingSection: React.FC<SubscriptionBillingSectionProp
           ? "Yearly Pro Plan - AI-Powered Sales Coaching Platform" 
           : "Monthly Pro Plan - AI-Powered Sales Coaching Platform",
         "product": {
-          "description": "Full access to AI Sales Coaching, MEDDIC breakdowns, and pitch labs billed monthly.",
+          "description": selectedBillingCycle === 'yearly'
+            ? "Full access to AI Sales Coaching with 18% annual discount and priority processing queue."
+            : "Full access to AI Sales Coaching, MEDDIC breakdowns, and pitch labs billed monthly.",
           "quantity": "1"
         },
         "billing_cycles": [

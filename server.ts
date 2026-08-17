@@ -1695,7 +1695,7 @@ app.post("/api/paypal/create-recurring-plan", async (req, res) => {
             : "Monthly Pro Plan - AI-Powered Sales Coaching Platform",
           product: {
             description: isYearly
-              ? "Full access to AI Sales Coaching, MEDDIC breakdowns, and pitch labs billed yearly (18% savings)."
+              ? "Full access to AI Sales Coaching with 18% annual discount and priority processing queue."
               : "Full access to AI Sales Coaching, MEDDIC breakdowns, and pitch labs billed monthly.",
             quantity: "1"
           },
@@ -1886,7 +1886,7 @@ app.get("/api/paypal/billing-plan-schema", (req, res) => {
           billing_plan: {
             name: "Yearly Pro Plan - AI-Powered Sales Coaching Platform",
             product: {
-              description: "Full access to AI Sales Coaching, MEDDIC breakdowns, and pitch labs billed yearly (18% savings).",
+              description: "Full access to AI Sales Coaching with 18% annual discount and priority processing queue.",
               quantity: "1"
             },
             billing_cycles: [

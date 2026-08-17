@@ -45,6 +45,7 @@ import {
   FileAudio,
   Eye,
   Search,
+  Flame,
   X
 } from 'lucide-react';
 import {
@@ -314,6 +315,22 @@ export const SalesCoachingFeed: React.FC<SalesCoachingFeedProps> = ({
     'cal-1-1': true,
     'cal-2-0': true
   });
+
+  // Additional manually completed weekly prep slots
+  const [extraCompletedPrepCount, setExtraCompletedPrepCount] = useState<number>(1);
+  const [completedWeeklyDays, setCompletedWeeklyDays] = useState<{ [dayKey: string]: boolean }>({
+    'mon': true,
+    'tue': true,
+    'wed': true,
+    'thu': true,
+    'fri': false,
+    'sat': false,
+    'sun': false
+  });
+
+  const toggleWeeklyDayPrep = (dayKey: string) => {
+    setCompletedWeeklyDays(prev => ({ ...prev, [dayKey]: !prev[dayKey] }));
+  };
 
   const togglePrepItem = (key: string) => {
     setCompletedPrep(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1290,6 +1307,188 @@ export const SalesCoachingFeed: React.FC<SalesCoachingFeedProps> = ({
             </button>
           </div>
         </div>
+
+        {/* FEATURE: WEEKLY STREAK & PRE-CALL PREP PROGRESS BAR */}
+        {(() => {
+          const weeklyDaysList = [
+            { key: 'mon', label: 'Mon', date: 'Aug 11', client: 'ACME Corp', focus: 'SOC2 & Security Review' },
+            { key: 'tue', label: 'Tue', date: 'Aug 12', client: 'Beta Retail', focus: 'TCO & CFO ROI Breakdown' },
+            { key: 'wed', label: 'Wed', date: 'Aug 13', client: 'Delta Health', focus: 'MEDDIC Champion Prep' },
+            { key: 'thu', label: 'Thu', date: 'Today', client: 'Gamma Logistics', focus: 'Discovery Objection Prep' },
+            { key: 'fri', label: 'Fri', date: 'Aug 15', client: 'FinTech One', focus: 'Executive Multi-threading' },
+            { key: 'sat', label: 'Sat', date: 'Aug 16', client: 'Weekend Review', focus: 'Pipeline Forecast Audit' },
+            { key: 'sun', label: 'Sun', date: 'Aug 17', client: 'Weekly Planning', focus: 'Agenda Preparation' }
+          ];
+
+          const completedCount = Object.values(completedWeeklyDays).filter(Boolean).length;
+          const weeklyGoal = 5;
+          const streakPercent = Math.min(100, Math.round((completedCount / weeklyGoal) * 100));
+          const isGoalAchieved = completedCount >= weeklyGoal;
+
+          return (
+            <div
+              id="weekly-streak-widget"
+              className={`mb-6 p-4 sm:p-5 rounded-2xl border transition-all ${
+                isDarkMode
+                  ? 'bg-gradient-to-br from-slate-900 via-slate-900/90 to-amber-950/20 border-amber-500/30 text-slate-100 shadow-lg'
+                  : 'bg-gradient-to-br from-amber-50/80 via-white to-[#F3F8EA] border-[#A8C66C] text-slate-900 shadow-sm'
+              }`}
+            >
+              {/* Streak Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white flex items-center justify-center font-black shadow-md shadow-amber-500/20">
+                      <Flame className="w-6 h-6 fill-white text-white animate-pulse" />
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-[#800000] text-white text-[9px] font-black border-2 border-white dark:border-slate-900">
+                      {completedCount}d
+                    </span>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-black tracking-tight flex items-center gap-1.5">
+                        <span>Weekly Streak</span>
+                        <span className="text-xs text-amber-600 dark:text-amber-400 font-extrabold">• {completedCount}-Day Streak Active</span>
+                      </h4>
+                      {isGoalAchieved && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                          <Trophy className="w-3 h-3 text-amber-500" /> Goal Met!
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Completed Pre-Call Prep Slots: <strong className="text-[#800000] dark:text-red-400">{completedCount} of {weeklyGoal} slots</strong> this week ({streakPercent}% target)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#800000] text-white shadow-xs">
+                    Target: 5 Preps / Wk
+                  </span>
+                  <button
+                    onClick={() => {
+                      const nextUncompletedDay = weeklyDaysList.find(d => !completedWeeklyDays[d.key]);
+                      if (nextUncompletedDay) {
+                        toggleWeeklyDayPrep(nextUncompletedDay.key);
+                      } else {
+                        // Reset or cycle
+                        setCompletedWeeklyDays({
+                          'mon': true,
+                          'tue': true,
+                          'wed': true,
+                          'thu': true,
+                          'fri': false,
+                          'sat': false,
+                          'sun': false
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-extrabold bg-[#A8C66C] hover:bg-[#8BA854] text-white transition-all shadow-xs"
+                    title="Quick log a 30s prep session"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{isGoalAchieved ? 'Reset Streak' : 'Complete Prep (+1)'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress Bar with Milestone Flags */}
+              <div className="space-y-1.5 my-3">
+                <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span>Weekly Pace ({streakPercent}%)</span>
+                  <span>{completedCount} / {weeklyGoal} Target Completed</span>
+                </div>
+
+                <div className="relative w-full h-3 bg-slate-200 dark:bg-slate-700/80 rounded-full overflow-hidden p-0.5">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-[#800000] via-[#A8C66C] to-emerald-500 shadow-inner"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${streakPercent}%` }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                  />
+                </div>
+
+                {/* Milestone Indicators */}
+                <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-0.5">
+                  <span>0 Preps</span>
+                  <span className={completedCount >= 2 ? 'text-emerald-600 dark:text-emerald-400 font-black' : ''}>2 Preps</span>
+                  <span className={completedCount >= 3 ? 'text-amber-600 dark:text-amber-400 font-black' : ''}>3 Preps (Bronze)</span>
+                  <span className={completedCount >= 4 ? 'text-blue-600 dark:text-blue-400 font-black' : ''}>4 Preps</span>
+                  <span className={completedCount >= 5 ? 'text-emerald-600 dark:text-emerald-400 font-black' : ''}>5 Preps (Streak Master 🏆)</span>
+                </div>
+              </div>
+
+              {/* Day-by-Day Slot Interactive Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-2">
+                {weeklyDaysList.map((day) => {
+                  const isDone = !!completedWeeklyDays[day.key];
+                  const isToday = day.label === 'Thu' || day.date === 'Today';
+
+                  return (
+                    <button
+                      key={day.key}
+                      onClick={() => toggleWeeklyDayPrep(day.key)}
+                      className={`p-2.5 rounded-xl border text-left transition-all relative ${
+                        isDone
+                          ? isDarkMode
+                            ? 'bg-emerald-950/40 border-emerald-700 text-emerald-100 shadow-xs'
+                            : 'bg-[#F3F8EA] border-[#A8C66C] text-slate-900 shadow-xs'
+                          : isToday
+                            ? isDarkMode
+                              ? 'bg-amber-950/30 border-amber-500 text-amber-200 ring-1 ring-amber-500/40'
+                              : 'bg-amber-50 border-amber-300 text-amber-900 ring-1 ring-amber-400/50'
+                            : isDarkMode
+                              ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:border-slate-600'
+                              : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[11px] font-black uppercase tracking-wider">
+                          {day.label}
+                        </span>
+                        {isDone ? (
+                          <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
+                            ✓
+                          </span>
+                        ) : isToday ? (
+                          <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold">
+                            ⏳
+                          </span>
+                        ) : (
+                          <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-400 flex items-center justify-center text-[9px]">
+                            ○
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[10px] font-bold mt-1 truncate">
+                        {day.client}
+                      </div>
+
+                      <div className="text-[9px] text-slate-400 dark:text-slate-400 truncate mt-0.5">
+                        {isDone ? 'Completed' : isToday ? 'Prep Ready' : 'Pending'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Coaching Insight Uplift Note */}
+              <div className="mt-3 pt-2.5 border-t border-amber-200/60 dark:border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                <span className="flex items-center gap-1.5 font-medium text-[11px]">
+                  <Sparkles className="w-3.5 h-3.5 text-[#800000] dark:text-red-400" />
+                  <span><strong>+24% Win Rate Uplift:</strong> Completing 5 pre-call prep slots weekly correlates with a 24% increase in stage progression.</span>
+                </span>
+                <span className="text-[10px] font-bold text-[#800000] dark:text-red-400">
+                  {5 - completedCount > 0 ? `${5 - completedCount} more slots to hit weekly streak goal` : '🎉 All 5 weekly prep slots completed!'}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Gemini AI Proposed Time Slot Placeholders */}
         {proposedPrepSlots && proposedPrepSlots.length > 0 && (

@@ -1,23 +1,78 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthenticated() {
+
+    // Global reusable security helpers
+    function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
 
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helpers
+    function isValidUserProfile(data, userId) {
+      return data != null &&
+        (!('userId' in data) || data.userId == userId || data.userId == request.auth.uid) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 256)) &&
+        (!('name' in data) || (data.name is string && data.name.size() <= 128)) &&
+        (!('role' in data) || (data.role is string && data.role.size() <= 64)) &&
+        (!('subscriptionStatus' in data) || (data.subscriptionStatus is string && data.subscriptionStatus.size() <= 64));
+    }
+
+    function isValidCoachingSession(data, userId) {
+      return data != null &&
+        (!('userId' in data) || data.userId == userId || data.userId == request.auth.uid) &&
+        (!('sessionId' in data) || (data.sessionId is string && data.sessionId.size() <= 128)) &&
+        (!('score' in data) || (data.score is number)) &&
+        (!('repName' in data) || (data.repName is string && data.repName.size() <= 128));
+    }
+
+    function isValidOpportunity(data, userId) {
+      return data != null &&
+        (!('userId' in data) || data.userId == userId || data.userId == request.auth.uid) &&
+        (!('opportunityId' in data) || (data.opportunityId is string && data.opportunityId.size() <= 128)) &&
+        (!('company' in data) || (data.company is string && data.company.size() <= 256)) &&
+        (!('dealSize' in data) || (data.dealSize is number));
+    }
+
+    // User Profile Documents
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming(), userId);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Coaching Sessions Subcollection
       match /coachingSessions/{sessionId} {
-        allow read, write: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(sessionId) && isValidCoachingSession(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(sessionId) && isValidCoachingSession(incoming(), userId);
+        allow delete: if isOwner(userId) && isValidId(sessionId);
       }
 
+      // CRM Opportunities Subcollection
       match /opportunities/{opportunityId} {
-        allow read, write: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(opportunityId) && isValidOpportunity(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(opportunityId) && isValidOpportunity(incoming(), userId);
+        allow delete: if isOwner(userId) && isValidId(opportunityId);
       }
     }
   }
